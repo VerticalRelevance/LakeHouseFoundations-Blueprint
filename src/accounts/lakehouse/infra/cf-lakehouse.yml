@@ -16,6 +16,8 @@ Resources:
   RawZoneBucket:
     Type: AWS::S3::Bucket
     Properties: 
+      AccessControl: Private
+      
       BucketEncryption: 
         ServerSideEncryptionConfiguration: 
           - ServerSideEncryptionByDefault:
@@ -26,6 +28,7 @@ Resources:
   TransformedZoneBucket:
     Type: AWS::S3::Bucket
     Properties: 
+      AccessControl: Private
       BucketEncryption: 
         ServerSideEncryptionConfiguration: 
           - ServerSideEncryptionByDefault:
@@ -35,6 +38,7 @@ Resources:
 
   CuratedZoneBucket:
     Type: AWS::S3::Bucket
+    AccessControl: Private
     Properties: 
       BucketEncryption: 
         ServerSideEncryptionConfiguration: 

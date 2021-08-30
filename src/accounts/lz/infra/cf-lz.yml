@@ -16,9 +16,27 @@ Resources:
   LandingZoneBucket:
     Type: AWS::S3::Bucket
     Properties: 
+      AccessControl: Private
       BucketEncryption: 
         ServerSideEncryptionConfiguration: 
           - ServerSideEncryptionByDefault:
               SSEAlgorithm: AES256
               # SSEAlgorithm: 'aws:kms'
               # KMSMasterKeyID: KMS-KEY-ARN
+
+    # Kafka
+    KafkaProducer:
+      Type: 'AWS::MSK::Cluster'
+      Properties:
+        ClusterName: !Ref Environment 
+        KafkaVersion: 2.2.1
+        NumberOfBrokerNodes: 3
+        CloudWatchLogs:  
+          Enabled: True
+          LogGroup: ''
+        BrokerNodeGroupInfo:
+          InstanceType: kafka.m5.large
+          ClientSubnets:
+            - ReplaceWithSubnetId1
+            - ReplaceWithSubnetId2
+            - ReplaceWithSubnetId3

@@ -1,0 +1,48 @@
+AWSTemplateFormatVersion: 2010-09-09
+Description: AWSCloudFormationStackSetAdministrationRole to enable use of AWS CloudFormation StackSets.
+
+Parameters:
+  Environment:
+    Description: Which account is the environment being creates
+    Type: String
+    Default: dev
+    AllowedValues:
+      - dev
+      - qa
+      - prod
+
+Resources:
+
+  RawZoneBucket:
+    Type: AWS::S3::Bucket
+    Properties: 
+      AccessControl: Private
+      
+      BucketEncryption: 
+        ServerSideEncryptionConfiguration: 
+          - ServerSideEncryptionByDefault:
+              SSEAlgorithm: AES256
+              # SSEAlgorithm: 'aws:kms'
+              # KMSMasterKeyID: KMS-KEY-ARN
+
+  TransformedZoneBucket:
+    Type: AWS::S3::Bucket
+    Properties: 
+      AccessControl: Private
+      BucketEncryption: 
+        ServerSideEncryptionConfiguration: 
+          - ServerSideEncryptionByDefault:
+              SSEAlgorithm: AES256
+              # SSEAlgorithm: 'aws:kms'
+              # KMSMasterKeyID: KMS-KEY-ARN
+
+  CuratedZoneBucket:
+    Type: AWS::S3::Bucket
+    AccessControl: Private
+    Properties: 
+      BucketEncryption: 
+        ServerSideEncryptionConfiguration: 
+          - ServerSideEncryptionByDefault:
+              SSEAlgorithm: AES256
+              # SSEAlgorithm: 'aws:kms'
+              # KMSMasterKeyID: KMS-KEY-ARN

@@ -1,0 +1,82 @@
+AWSTemplateFormatVersion: 2010-09-09
+Description: Landing Zone Account DataSync resources. We are just syncing 2 S3 buckets in this example
+
+Parameters:
+  ProjectName:
+    Type: String
+    Description: Project name to link stacks
+    Default: VR-LakeHouse-Ref-Arch
+
+  Environment:
+    Description: Which account is the environment being creates
+    Type: String
+    Default: dev
+    AllowedValues:
+      - dev
+      - qa
+      - prod
+
+Resources:
+  DataSyncSourceBucket:
+    Type: AWS::S3::Bucket
+    Properties: 
+      AccessControl: Private
+      BucketEncryption: 
+        ServerSideEncryptionConfiguration: 
+          - ServerSideEncryptionByDefault:
+              SSEAlgorithm: AES256
+
+  DataSyncBucketRole:
+    Type: 'AWS::IAM::Role'
+    Properties:
+      AssumeRolePolicyDocument:
+        Version: 2012-10-17
+        Statement:
+          - Effect: Allow
+            Principal:
+              Service: !Sub 'datasync.amazonaws.com'
+            Action: 'sts:AssumeRole'
+      Path: /
+      Policies:
+        - PolicyName: StatesExecutionPolicy
+          PolicyDocument:
+            Version: 2012-10-17
+            Statement:
+              - Effect: Allow
+                Action:
+                  - s3:GetBucketLocation
+                  - s3:ListBucket
+                  - s3:ListBucketMultipartUploads
+                Recource: !GetAtt DataSyncSourceBucket.Arn
+              - Effect: Allow
+                Action:
+                  - "s3:AbortMultipartUpload"
+                  - "s3:DeleteObject"
+                  - "s3:GetObject"
+                  - "s3:ListMultipartUploadParts"
+                  - "s3:GetObjectTagging"
+                  - "s3:PutObjectTagging"
+                  - "s3:PutObject"
+                Recource: 
+                  Fn::ImportValue: 
+                    !Sub "${ProjectName}:LzBucketArn"
+
+  DataSyncSourceBucketLocation:
+    Type: AWS::DataSync::LocationS3
+    Properties: 
+      S3BucketArn: !GetAtt DataSyncSourceBucket.Arn
+      S3Config: 
+        BucketAccessRoleArn: !GetAtt DataSyncBucketRole.Arn
+
+  DataSyncTargetBucketLocation:
+    Type: AWS::DataSync::LocationS3
+    Properties: 
+      S3BucketArn: !GetAtt DataSyncSourceBucket.Arn
+      S3Config: 
+        BucketAccessRoleArn: !GetAtt DataSyncBucketRole.Arn
+
+  DataSyncTask:
+    Type: AWS::DataSync::Task
+    Properties:
+      SourceLocationArn: !GetAtt DataSyncSourceBucketLocation.LocationArn
+      DestinationLocationArn: !GetAtt DataSyncTargetBucketLocation.LocationArn

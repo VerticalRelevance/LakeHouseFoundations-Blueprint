@@ -1,0 +1,75 @@
+AWSTemplateFormatVersion: 2010-09-09
+Description: AWSCloudFormationStackSetAdministrationRole to enable use of AWS CloudFormation StackSets.
+
+Parameters:
+  ComponentID:
+    Description: This templates' component identifier string
+    Type: String
+  Environment:
+    Description: Which account is the environment being creates
+    Type: String
+    Default: dev
+    AllowedValues:
+      - dev
+      - qa
+      - prod
+  CrawlerSrcBucketName:
+    Description: The name of the bucket to crawl
+
+
+Resources:
+
+  # Will likely need more roles for more specific functionality, in practice
+  GlueCrawlerRole:
+    Type: AWS::IAM::Role
+    Properties:
+      RoleName: '${Environment}-${ComponentID}-role'
+      AssumeRolePolicyDocument:
+        Version: "2012-10-17"
+        Statement:
+          -
+            Effect: "Allow"
+            Principal:
+              Service:
+                - "glue.amazonaws.com"
+            Action:
+              - "sts:AssumeRole"
+      Path: "/"
+      Policies:
+        -
+          PolicyName: '${Environment}-'
+          PolicyDocument:
+            Version: "2012-10-17"
+            Statement:
+              -
+                Effect: "Allow"
+                Action: "" # Need to define the with min permissions
+                Resource: "*"
+ 
+  ConsumerDatabase:
+    Type: AWS::Glue::Database
+    Properties:
+      CatalogId: !Ref AWS::AccountId
+      DatabaseInput:
+        Name: '${Environment}-${ComponentID}-database'
+        Description: "Catalog database for the crawler"
+        # LocationUri: "TestLocationUri"
+        # Parameters:
+        #   key1 : "value1"
+        #   key2 : "value2"
+
+
+  GlueCrawler:
+    Type: AWS::Glue::Crawler
+    Properties:
+      Name: '${Environment}-${ComponentID}-crawler'
+      Description: Crawler of desired data resource
+      Role: !Ref GlueCrawlerRole
+      DatabaseName: !Ref ConsumerDatabase
+      Targets:
+        - 
+          S3Targets: 
+            - 
+              ConnectionName: String
+              Path: '${CrawlerSrcBucketName}'
+      # Configuration: "{\"Version\":1.0,\"CrawlerOutput\":{\"Partitions\":{\"AddOrUpdateBehavior\":\"InheritFromTable\"},\"Tables\":{\"AddOrUpdateBehavior\":\"MergeNewColumns\"}}}"

@@ -26,9 +26,11 @@ Infrastructure definitions are grouped by each account's resources to be provisi
 [Changing default Lakeformation Security Settings]: https://docs.aws.amazon.com/lake-formation/latest/dg/change-settings.html 
 
 ### Resource Security Setup Links
+#### Cross-account Lake Formation Documentation
+[X-ACNT LAKEFORMATION DOCS]: https://docs.aws.amazon.com/lake-formation/latest/dg/access-control-cross-account.html
 #### AWS MSK
 [MSK CF TLS CONGIF]: https://docs.aws.amazon.com/AWSCloudFormation/latest/UserGuide/aws-properties-msk-cluster-tls.html
 
 ## Images
 
-[arch-img]: ./resources/images/lakehouse-ref-arch-1.png "Reference Architecture Diagram"
+[TARGET ARCH DIAGRAM]: ./resources/images/lakehouse-ref-arch-1.png "Reference Architecture Diagram"

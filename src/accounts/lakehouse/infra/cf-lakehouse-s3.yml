@@ -2,8 +2,12 @@ AWSTemplateFormatVersion: 2010-09-09
 Description: AWSCloudFormationStackSetAdministrationRole to enable use of AWS CloudFormation StackSets.
 
 Parameters:
+  ComponentID:
+    Description: This templates' component identifier string
+    Type: String
+    Default: lh-s3
   Environment:
-    Description: Which account is the environment being creates
+    Description: The environment in which the account is being deployed.
     Type: String
     Default: dev
     AllowedValues:
@@ -12,12 +16,19 @@ Parameters:
       - prod
 
 Resources:
+  GlueStudioProcessingBucket:
+    Type: AWS::S3::Bucket
+    Properties:
+      BucketName: !Sub '${Environment}-lakehouse-${ComponentID}-glue-studio-temporary'
+      BucketEncryption: 
+        ServerSideEncryptionConfiguration: 
+          - ServerSideEncryptionByDefault:
+              SSEAlgorithm: AES256
 
   RawZoneBucket:
     Type: AWS::S3::Bucket
     Properties: 
-      AccessControl: Private
-      
+      BucketName: !Sub '${Environment}-lakehouse-${ComponentID}-raw'
       BucketEncryption: 
         ServerSideEncryptionConfiguration: 
           - ServerSideEncryptionByDefault:
@@ -28,7 +39,7 @@ Resources:
   TransformedZoneBucket:
     Type: AWS::S3::Bucket
     Properties: 
-      AccessControl: Private
+      BucketName: !Sub '${Environment}-lakehouse-${ComponentID}-transformed'
       BucketEncryption: 
         ServerSideEncryptionConfiguration: 
           - ServerSideEncryptionByDefault:
@@ -38,8 +49,8 @@ Resources:
 
   CuratedZoneBucket:
     Type: AWS::S3::Bucket
-    AccessControl: Private
-    Properties: 
+    Properties:
+      BucketName: !Sub '${Environment}-lakehouse-${ComponentID}-curated'
       BucketEncryption: 
         ServerSideEncryptionConfiguration: 
           - ServerSideEncryptionByDefault:

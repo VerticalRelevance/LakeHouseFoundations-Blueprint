@@ -3,117 +3,152 @@ Description: Landing Zone Account resources
 
 Parameters:
 
-  ProjectName:
+  ComponentID:
+    Description: This templates' component identifier string
     Type: String
-    Description: Project name to link stacks
-    Default: VR-LakeHouse-Ref-Arch
+    Default: lz-main
 
-  Environment:
-    Description: Which account is the environment being creates
+  Env:
+    Description: The environment in which the account is being deployed.
     Type: String
     Default: dev
     AllowedValues:
       - dev
       - qa
       - prod
-  
-  VpcCIDR:
-    Description: Please enter the IP range (CIDR notation) for this VPC
-    Type: String
-    Default: 10.14.0.0/16
 
-  PublicSubnet1CIDR:
-    Description: Please enter the IP range (CIDR notation) for the public subnet in the first Availability Zone
+  ProjectName:
     Type: String
-    Default: 10.14.0.0/19
+    Description: Project name to link stacks
+    Default: consumer-lakeformation
 
-  PublicSubnet2CIDR:
-    Description: Please enter the IP range (CIDR notation) for the public subnet in the second Availability Zone
-    Type: String
-    Default: 10.14.32.0/19
+  # VpcCIDR:
+  #   Description: Please enter the IP range (CIDR notation) for this VPC
+  #   Type: String
+  #   Default: 10.14.0.0/16
 
-  PrivateSubnet1CIDR:
-    Description: Please enter the IP range (CIDR notation) for the private subnet in the first Availability Zone
-    Type: String
-    Default: 10.14.64.0/19
+  # PublicSubnet1CIDR:
+  #   Description: Please enter the IP range (CIDR notation) for the public subnet in the first Availability Zone
+  #   Type: String
+  #   Default: 10.14.0.0/19
 
-  PrivateSubnet2CIDR:
-    Description: Please enter the IP range (CIDR notation) for the private subnet in the second Availability Zone
-    Type: String
-    Default: 10.14.96.0/19
+  # PublicSubnet2CIDR:
+  #   Description: Please enter the IP range (CIDR notation) for the public subnet in the second Availability Zone
+  #   Type: String
+  #   Default: 10.14.32.0/19
+
+  # PrivateSubnet1CIDR:
+  #   Description: Please enter the IP range (CIDR notation) for the private subnet in the first Availability Zone
+  #   Type: String
+  #   Default: 10.14.64.0/19
+
+  # PrivateSubnet2CIDR:
+  #   Description: Please enter the IP range (CIDR notation) for the private subnet in the second Availability Zone
+  #   Type: String
+  #   Default: 10.14.96.0/19
 
 Resources:
-  VPC:
-    Type: AWS::EC2::VPC
-    Properties:
-      CidrBlock: !Ref VpcCIDR
-      EnableDnsHostnames: true
-      Tags:
-        - Key: Name
-          Value: !Ref ProjectName
-
-  # InternetGateway:
-  #   Type: AWS::EC2::InternetGateway
+  # VPC:
+  #   Type: AWS::EC2::VPC
   #   Properties:
+  #     CidrBlock: !Ref VpcCIDR
+  #     EnableDnsHostnames: true
   #     Tags:
   #       - Key: Name
   #         Value: !Ref ProjectName
 
-  # InternetGatewayAttachment:
-  #   Type: AWS::EC2::VPCGatewayAttachment
+  # # Removed Internet Gateway for the time being for security purposes
+  # # InternetGateway:
+  # #   Type: AWS::EC2::InternetGateway
+  # #   Properties:
+  # #     Tags:
+  # #       - Key: Name
+  # #         Value: !Ref ProjectName
+
+  # # InternetGatewayAttachment:
+  # #   Type: AWS::EC2::VPCGatewayAttachment
+  # #   Properties:
+  # #     InternetGatewayId: !Ref InternetGateway
+  # #     VpcId: !Ref VPC
+
+  # PublicSubnet1:
+  #   Type: AWS::EC2::Subnet
   #   Properties:
-  #     InternetGatewayId: !Ref InternetGateway
   #     VpcId: !Ref VPC
+  #     AvailabilityZone: !Select [0, !GetAZs ""]
+  #     CidrBlock: !Ref PublicSubnet1CIDR
+  #     MapPublicIpOnLaunch: true
+  #     Tags:
+  #       - Key: Name
+  #         Value: !Sub "${ProjectName} Public Subnet (AZ1)"
 
-  PublicSubnet1:
-    Type: AWS::EC2::Subnet
+  # PublicSubnet2:
+  #   Type: AWS::EC2::Subnet
+  #   Properties:
+  #     VpcId: !Ref VPC
+  #     AvailabilityZone: !Select [1, !GetAZs ""]
+  #     CidrBlock: !Ref PublicSubnet2CIDR
+  #     MapPublicIpOnLaunch: true
+  #     Tags:
+  #       - Key: Name
+  #         Value: !Sub "${ProjectName} Public Subnet (AZ2)"
+
+  # PrivateSubnet1:
+  #   Type: AWS::EC2::Subnet
+  #   Properties:
+  #     VpcId: !Ref VPC
+  #     AvailabilityZone: !Select [0, !GetAZs ""]
+  #     CidrBlock: !Ref PrivateSubnet1CIDR
+  #     MapPublicIpOnLaunch: false
+  #     Tags:
+  #       - Key: Name
+  #         Value: !Sub "${ProjectName} Private Subnet (AZ1)"
+
+  # PrivateSubnet2:
+  #   Type: AWS::EC2::Subnet
+  #   Properties:
+  #     VpcId: !Ref VPC
+  #     AvailabilityZone: !Select [1, !GetAZs ""]
+  #     CidrBlock: !Ref PrivateSubnet2CIDR
+  #     MapPublicIpOnLaunch: false
+  #     Tags:
+  #       - Key: Name
+  #         Value: !Sub "${ProjectName} Private Subnet (AZ2)"
+
+  GlueStudioRole:
+    Type: 'AWS::IAM::Role'
     Properties:
-      VpcId: !Ref VPC
-      AvailabilityZone: !Select [0, !GetAZs ""]
-      CidrBlock: !Ref PublicSubnet1CIDR
-      MapPublicIpOnLaunch: true
-      Tags:
-        - Key: Name
-          Value: !Sub "${ProjectName} Public Subnet (AZ1)"
+      RoleName: !Sub "${Env}-lakehouse-${ComponentID}-glue-studio-role"
+      AssumeRolePolicyDocument:
+        Version: 2012-10-17
+        Statement:
+          - Effect: Allow
+            Principal:
+              Service: 'glue.amazonaws.com'
+            Action: 'sts:AssumeRole'
+      Path: /
+      ManagedPolicyArns:
+        - "arn:aws:iam::aws:policy/service-role/AWSGlueServiceRole"
+      Policies:
+        - PolicyName: !Sub "${Env}-${ComponentID}-lakehouse-role-policy"
+          PolicyDocument:
+            Version: 2012-10-17
+            Statement:
+              - Action:
+                  - "s3:*"
+                Effect: Allow
+                Resource: 
+                  - !Join [ '', ["arn:aws:s3:::", !Sub "${Env}", "-lakehouse-", !Sub "${ComponentID}", "-producer-bucket/*"]]
+                  - !Join [ '', ["arn:aws:s3:::", !Sub "${Env}", "-lakehouse-", !Sub "${ComponentID}", "-lz-bucket/*"]]
+                  - !Join [ '', ["arn:aws:s3:::", !Sub "${Env}", "-lakehouse-lh-s3-raw/*"]]
+                  - !Join [ '', ["arn:aws:s3:::", !Sub "${Env}", "-lakehouse-lh-s3-transformed/*"]]
+                  - !Join [ '', ["arn:aws:s3:::", !Sub "${Env}", "-lakehouse-lh-s3-curated/*"]]
+                  - !Join [ '', ["arn:aws:s3:::", !Sub "${Env}", "-lakehouse-lh-s3-glue-studio-temporary/*"]]
 
-  PublicSubnet2:
-    Type: AWS::EC2::Subnet
-    Properties:
-      VpcId: !Ref VPC
-      AvailabilityZone: !Select [1, !GetAZs ""]
-      CidrBlock: !Ref PublicSubnet2CIDR
-      MapPublicIpOnLaunch: true
-      Tags:
-        - Key: Name
-          Value: !Sub "${ProjectName} Public Subnet (AZ2)"
-
-  PrivateSubnet1:
-    Type: AWS::EC2::Subnet
-    Properties:
-      VpcId: !Ref VPC
-      AvailabilityZone: !Select [0, !GetAZs ""]
-      CidrBlock: !Ref PrivateSubnet1CIDR
-      MapPublicIpOnLaunch: false
-      Tags:
-        - Key: Name
-          Value: !Sub "${ProjectName} Private Subnet (AZ1)"
-
-  PrivateSubnet2:
-    Type: AWS::EC2::Subnet
-    Properties:
-      VpcId: !Ref VPC
-      AvailabilityZone: !Select [1, !GetAZs ""]
-      CidrBlock: !Ref PrivateSubnet2CIDR
-      MapPublicIpOnLaunch: false
-      Tags:
-        - Key: Name
-          Value: !Sub "${ProjectName} Private Subnet (AZ2)"
-
-  
   LandingZoneBucket:
     Type: AWS::S3::Bucket
     Properties: 
-      AccessControl: Private
+      BucketName: !Sub "${Env}-lakehouse-${ComponentID}-lz-bucket"
       BucketEncryption: 
         ServerSideEncryptionConfiguration: 
           - ServerSideEncryptionByDefault:
@@ -121,45 +156,54 @@ Resources:
               # SSEAlgorithm: 'aws:kms'
               # KMSMasterKeyID: KMS-KEY-ARN
 
+  ProducerBucket:
+    Type: AWS::S3::Bucket
+    Properties: 
+      BucketName: !Sub "${Env}-lakehouse-${ComponentID}-producer-bucket"
+      BucketEncryption: 
+        ServerSideEncryptionConfiguration: 
+          - ServerSideEncryptionByDefault:
+              SSEAlgorithm: AES256
+
 Outputs:
-  LzVpc:
-    Description: A reference to the created VPC
-    Value: !Ref VPC
-    Export:
-      Name: !Sub "${ProjectName}:VPC"
+  # LzVpc:
+  #   Description: A reference to the created VPC
+  #   Value: !Ref VPC
+  #   Export:
+  #     Name: !Sub "${ProjectName}:VPC"
 
-  PublicSubnet1:
-    Description: A reference to the public subnet in the 1st Availability Zone
-    Value: !Ref PublicSubnet1
-    Export:
-      Name: !Sub "${ProjectName}:PublicSubnet1"
+  # PublicSubnet1:
+  #   Description: A reference to the public subnet in the 1st Availability Zone
+  #   Value: !Ref PublicSubnet1
+  #   Export:
+  #     Name: !Sub "${ProjectName}:PublicSubnet1"
 
-  PublicSubnet2:
-    Description: A reference to the public subnet in the 2nd Availability Zone
-    Value: !Ref PublicSubnet2
-    Export:
-      Name: !Sub "${ProjectName}:PublicSubnet2"
+  # PublicSubnet2:
+  #   Description: A reference to the public subnet in the 2nd Availability Zone
+  #   Value: !Ref PublicSubnet2
+  #   Export:
+  #     Name: !Sub "${ProjectName}:PublicSubnet2"
 
-  PrivateSubnet1:
-    Description: A reference to the private subnet in the 1st Availability Zone
-    Value: !Ref PrivateSubnet1
-    Export:
-      Name: !Sub "${ProjectName}:PrivateSubnet1"
+  # PrivateSubnet1:
+  #   Description: A reference to the private subnet in the 1st Availability Zone
+  #   Value: !Ref PrivateSubnet1
+  #   Export:
+  #     Name: !Sub "${ProjectName}:PrivateSubnet1"
 
-  PrivateSubnet2:
-    Description: A reference to the private subnet in the 2nd Availability Zone
-    Value: !Ref PrivateSubnet2
-    Export:
-      Name: !Sub "${ProjectName}:PrivateSubnet2"
+  # PrivateSubnet2:
+  #   Description: A reference to the private subnet in the 2nd Availability Zone
+  #   Value: !Ref PrivateSubnet2
+  #   Export:
+  #     Name: !Sub "${ProjectName}:PrivateSubnet2"
 
-  VpcCIDR:
-    Description: VPC CIDR
-    Value: !Ref VpcCIDR
-    Export:
-      Name: !Sub "${ProjectName}:VpcCIDR"
+  # VpcCIDR:
+  #   Description: VPC CIDR
+  #   Value: !Ref VpcCIDR
+  #   Export:
+  #     Name: !Sub "${ProjectName}:VpcCIDR"
 
   LzBucketArn:
     Value: !GetAtt LandingZoneBucket.Arn
     Export:
-      Name: !Sub "${ProjectName}:LzBucketArn"
+      Name: !Sub "LZ:LzBucketArn"
     Description: "Landing Zone bucket ARN"

@@ -2,13 +2,12 @@ AWSTemplateFormatVersion: 2010-09-09
 Description: Landing Zone Account DataSync resources. We are just syncing 2 S3 buckets in this example
 
 Parameters:
-  ProjectName:
+  ComponentID:
+    Description: This templates' component identifier string
     Type: String
-    Description: Project name to link stacks
-    Default: VR-LakeHouse-Ref-Arch
-
-  Environment:
-    Description: Which account is the environment being creates
+    Default: lz-datasync
+  Env:
+    Description: The environment in which the account is being deployed.
     Type: String
     Default: dev
     AllowedValues:
@@ -20,7 +19,7 @@ Resources:
   DataSyncSourceBucket:
     Type: AWS::S3::Bucket
     Properties: 
-      AccessControl: Private
+      BucketName: !Sub "${Env}-lakehouse-${ComponentID}-datasync-source-bucket"
       BucketEncryption: 
         ServerSideEncryptionConfiguration: 
           - ServerSideEncryptionByDefault:
@@ -29,37 +28,39 @@ Resources:
   DataSyncBucketRole:
     Type: 'AWS::IAM::Role'
     Properties:
+      RoleName: "${Env}-lakehouse-${ComponentID}-datasync-role"
       AssumeRolePolicyDocument:
         Version: 2012-10-17
         Statement:
           - Effect: Allow
             Principal:
-              Service: !Sub 'datasync.amazonaws.com'
+              Service: 'datasync.amazonaws.com'
             Action: 'sts:AssumeRole'
       Path: /
+      ManagedPolicyArns:
+        - "arn:aws:iam::aws:policy/AWSDataSyncFullAccess"
       Policies:
-        - PolicyName: StatesExecutionPolicy
+        - PolicyName: !Sub "${Env}-${ComponentID}-lakehouse-role-policy"
           PolicyDocument:
             Version: 2012-10-17
             Statement:
-              - Effect: Allow
-                Action:
-                  - s3:GetBucketLocation
-                  - s3:ListBucket
-                  - s3:ListBucketMultipartUploads
-                Recource: !GetAtt DataSyncSourceBucket.Arn
-              - Effect: Allow
-                Action:
-                  - "s3:AbortMultipartUpload"
-                  - "s3:DeleteObject"
-                  - "s3:GetObject"
-                  - "s3:ListMultipartUploadParts"
-                  - "s3:GetObjectTagging"
-                  - "s3:PutObjectTagging"
-                  - "s3:PutObject"
-                Recource: 
-                  Fn::ImportValue: 
-                    !Sub "${ProjectName}:LzBucketArn"
+            - Action:
+                - "s3:GetBucketLocation"
+                - "s3:ListBucket"
+                - "s3:ListBucketMultipartUploads"
+              Effect: Allow
+              Resource: "arn:aws:s3:::dev-lakehouse-lz-main-lz-bucket"
+            - Action:
+                - "s3:AbortMultipartUpload"
+                - "s3:DeleteObject"
+                - "s3:GetObject"
+                - "s3:ListMultipartUploadParts"
+                - "s3:PutObjectTagging"
+                - "s3:GetObjectTagging"
+                - "s3:PutObject"
+            Effect: Allow
+            Resource: "arn:aws:s3:::dev-lakehouse-lz-main-lz-bucket/*"
+        
 
   DataSyncSourceBucketLocation:
     Type: AWS::DataSync::LocationS3
@@ -71,7 +72,7 @@ Resources:
   DataSyncTargetBucketLocation:
     Type: AWS::DataSync::LocationS3
     Properties: 
-      S3BucketArn: !GetAtt DataSyncSourceBucket.Arn
+      S3BucketArn: !ImportValue LZ:LzBucketArn
       S3Config: 
         BucketAccessRoleArn: !GetAtt DataSyncBucketRole.Arn
 

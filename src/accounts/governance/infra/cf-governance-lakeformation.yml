@@ -1,53 +1,22 @@
 AWSTemplateFormatVersion: 2010-09-09
 Description: AWSCloudFormationStackSetAdministrationRole to enable use of AWS CloudFormation StackSets.
 
-# Metadata:
-#   'AWS::CloudFormation::Interface':
-#     ParameterGroups:
-#       - Label:
-#           default: Database Configuration
-#         Parameters:
-#           - TPCDBName
-#           - DBMasterUser
-#           - DBMasterPassword
-#       - Label:
-#           default: User Configuration
-#         Parameters:
-#           - TestUserPassword
-#       - Label:
-#           default: Misc Configuration
-#         Parameters:
-#           - LatestAmiId
-#           - EC2KeyPair
-    # ParameterLabels:
-    #   TPCDBName:
-    #     default: Database Name
-    #   DBMasterUser:
-    #     default: Master Username
-    #   DBMasterPassword:
-    #     default: Master User Password
-    #   TestUserPassword:
-    #     default: Test User Password
-    #   EC2KeyPair:
-    #     default: EC2 Key Pair
-    #   LatestAmiId:
-    #     default: Latest AMI Id
 Mappings:
   SubnetConfig:
     VPC:
-      CIDR: 10.0.10.0/16
+      CIDR: 10.0.20.0/16
     PublicOne:
-      CIDR: 10.0.10.0/24
+      CIDR: 10.0.20.0/24
     PublicTwo:
-      CIDR: 10.0.11.0/24
+      CIDR: 10.0.21.0/24
     Private:
-      CIDR: 10.0.12.0/24
+      CIDR: 10.0.22.0/24
 
 Parameters:
   ComponentID:
     Description: This templates' component identifier string
     Type: String
-    Default: consumer-lakeformation
+    Default: gov-lakeformation
   Env:
     Description: The environment in which the account is being deployed.
     Type: String
@@ -56,44 +25,20 @@ Parameters:
       - dev
       - qa
       - prod
-  # TPCDBName:
-  #   Type: String
-  #   Default: tpc
-  #   AllowedValues:
-  #     - tpc
-  #   Description: Name of the database that will be created.
-  # DBMasterUser:
-  #   Type: String
-  #   Default: tpcadmin
-  #   Description: Master username for TPC database.
-  # DBMasterPassword:
-  #   Type: String
-  #   Default: BigData26!
-  #   Description: Master password for TPC database.
   TestUserPassword:
     Type: String
     Default: Password1!
     Description: Password for all test users.
-  # # EC2KeyPair:
-  # #   Description: Amazon EC2 Key Pair
-  # #   Type: 'AWS::EC2::KeyPair::KeyName'
-  # #   MinLength: 1
-  # LatestAmiId:
-  #   Type: 'AWS::SSM::Parameter::Value<AWS::EC2::Image::Id>'
-  #   Default: /aws/service/ami-amazon-linux-latest/amzn2-ami-hvm-x86_64-gp2
-  #   AllowedValues:
-  #     - /aws/service/ami-amazon-linux-latest/amzn2-ami-hvm-x86_64-gp2
-  #   Description: Image ID for the EC2 helper instance. DO NOT change this.
 
 Resources:
-  # RDSSecurityGroup:
+  # LakeformationSecurityGroup:
   #   Type: 'AWS::EC2::SecurityGroup'
   #   Properties:
-  #     GroupDescription: Security Group for RDS
+  #     GroupDescription: Security Group for Lakeformation VPC
   #     VpcId: !Ref LakeFormationVPC
   #     Tags:
   #       - Key: Name
-  #         Value: LF-Workshop-RDS-SecGroup
+  #         Value: Lakeformation-SecGroup
   # SelfIngress:
   #   Type: 'AWS::EC2::SecurityGroupIngress'
   #   DependsOn: RDSSecurityGroup
@@ -101,38 +46,6 @@ Resources:
   #     GroupId: !Ref RDSSecurityGroup
   #     IpProtocol: '-1'
   #     SourceSecurityGroupId: !Ref RDSSecurityGroup
-  # RDSSubnetGroup:
-  #   Type: 'AWS::RDS::DBSubnetGroup'
-  #   Properties:
-  #     DBSubnetGroupDescription: RDS Subnet Group using subnets from 2 AZs
-  #     SubnetIds:
-  #       - !Ref PublicSubnetOne
-  #       - !Ref PublicSubnetTwo
-  #     Tags:
-  #       - Key: Name
-  #         Value: LF-Workshop-RDS-SubnetGroup
-  # TPCDatabase:
-  #   Type: 'AWS::RDS::DBInstance'
-  #   DependsOn:
-  #     - RDSSubnetGroup
-  #     - RDSSecurityGroup
-  #   DeletionPolicy: Delete
-  #   Properties:
-  #     DBInstanceClass: db.r5.large
-  #     DBInstanceIdentifier: tpc-database
-  #     DBName: !Ref TPCDBName
-  #     AllocatedStorage: '100'
-  #     DBSubnetGroupName: !Ref RDSSubnetGroup
-  #     Engine: MySQL
-  #     EngineVersion: 5.7.22
-  #     MasterUsername: !Ref DBMasterUser
-  #     MasterUserPassword: !Ref DBMasterPassword
-  #     BackupRetentionPeriod: '0'
-  #     StorageType: gp2
-  #     AllowMajorVersionUpgrade: false
-  #     VPCSecurityGroups:
-  #       - !Ref RDSSecurityGroup
-  #     PubliclyAccessible: true
   LakeFormationVPC:
     Type: 'AWS::EC2::VPC'
     Properties:
@@ -275,7 +188,6 @@ Resources:
       ServiceName: !Sub 'com.amazonaws.${AWS::Region}.s3'
       VpcId: !Ref LakeFormationVPC
 
-      
   # TPCGlueConnector:
   #   Type: 'AWS::Glue::Connection'
   #   Properties:
@@ -528,155 +440,7 @@ Resources:
       ManagedPolicyArns:
         - 'arn:aws:iam::aws:policy/AmazonAthenaFullAccess'
       UserName: !Sub "${Env}-lakehouse-${ComponentID}-lf-business-analyst"
-  
-  # EC2Role:
-  #   Type: 'AWS::IAM::Role'
-  #   Properties:
-  #     Path: /
-  #     RoleName: EC2Role
-  #     AssumeRolePolicyDocument:
-  #       Version: 2012-10-17
-  #       Statement:
-  #         - Effect: Allow
-  #           Principal:
-  #             Service:
-  #               - ec2.amazonaws.com
-  #           Action: 'sts:AssumeRole'
-  #     ManagedPolicyArns:
-  #       - 'arn:aws:iam::aws:policy/AdministratorAccess'
-  # EC2InstanceProfile:
-  #   Type: 'AWS::IAM::InstanceProfile'
-  #   Properties:
-  #     Path: /
-  #     Roles:
-  #       - !Ref EC2Role
-  # BackUpRestoreInstance:
-  #   Type: 'AWS::EC2::Instance'
-  #   Properties:
-  #     InstanceType: t2.small
-  #     ImageId: !Ref LatestAmiId
-  #     KeyName: !Ref EC2KeyPair
-  #     IamInstanceProfile: !Ref EC2InstanceProfile
-  #     NetworkInterfaces:
-  #       - AssociatePublicIpAddress: 'true'
-  #         DeviceIndex: '0'
-  #         GroupSet:
-  #           - !Ref RDSSecurityGroup
-  #         SubnetId: !Ref PublicSubnetOne
-  #     UserData: !Base64 
-  #       'Fn::Join':
-  #         - ''
-  #         - - |
-  #             #!/bin/bash -ex
-  #           - |
-  #             sudo yum -y install mysql
-  #           - >
-  #             aws s3 cp
-  #             s3://aws-data-analytics-workshops/lake-formation-workshop/sampledata/tripdata.csv
-  #             /tmp/
-  #           - 'aws s3 cp /tmp/tripdata.csv s3://'
-  #           - !Ref LFWorkshopBucket
-  #           - |
-  #             /glue/nyctaxi/
-  #           - >
-  #             aws s3 cp
-  #             s3://aws-data-analytics-workshops/lake-formation-workshop/scripts/nyctaxi-csv-to-json.py
-  #             /tmp/
-  #           - 'aws s3 cp /tmp/nyctaxi-csv-to-json.py s3://'
-  #           - !Ref LFWorkshopBucket
-  #           - |
-  #             /glue/scripts/
-  #           - >
-  #             aws s3 cp
-  #             s3://aws-data-analytics-workshops/lake-formation-workshop/notebooks/
-  #             /tmp/notebooks/ --recursive
-  #           - 'aws s3 cp /tmp/notebooks/ s3://'
-  #           - !Ref LFWorkshopBucket
-  #           - |
-  #             /notebooks/ --recursive
-  #           - >
-  #             aws s3 cp
-  #             s3://aws-data-analytics-workshops/lake-formation-workshop/sampledata/tpc.backup
-  #             /tmp/
-  #           - 'gunzip < /tmp/tpc.backup | mysql -h '
-  #           - !GetAtt 
-  #             - TPCDatabase
-  #             - Endpoint.Address
-  #           - ' -u '
-  #           - !Ref DBMasterUser
-  #           - ' -p'''
-  #           - !Ref DBMasterPassword
-  #           - ''' '
-  #           - !Ref TPCDBName
-  #           - |+
 
-  #     Tags:
-  #       - Key: Name
-  #         Value: EC2-DB-Loader
-  #   DependsOn:
-  #     - TPCDatabase
-  # AthenaDeveloperNamedQuery:
-  #   Type: 'AWS::Athena::NamedQuery'
-  #   Properties:
-  #     Database: !Ref TPCDBName
-  #     Description: A developer query on web page and web sales data.
-  #     Name: LF-Developer-Query
-  #     QueryString: >
-  #       /*
-  #        * Developer can only see web_page & web_sales tables
-  #        */
-  #       SELECT sum(ws_net_paid_inc_tax) NetPaid,
-  #               ws_web_site_sk WebSiteID
-  #       FROM dl_tpc_web_sales ws, dl_tpc_web_page wp WHERE ws.ws_web_site_sk =
-  #       wp.wp_web_page_sk GROUP BY  ws_web_site_sk;
-
-
-  #       /*
-  #        Check out the web_sales table
-  #       */ SELECT COUNT(*) FROM dl_tpc_web_sales;
-
-
-  #       /* Verify that a developer cannot access any other table. This should
-  #       give a Insufficient Privileges message */ SELECT * FROM dl_tpc_item
-  #       limit 10;
-  # AthenaBusinessAnalystNamedQuery:
-  #   Type: 'AWS::Athena::NamedQuery'
-  #   Properties:
-  #     Database: !Ref TPCDBName
-  #     Description: Sample query issued by Business Analyst.
-  #     Name: LF-BusinessAnalyst-Query
-  #     QueryString: |
-  #       /*
-  #          Verify that business-analyst can access the all the non-PII columns in customer table
-  #          */
-  #         SELECT *
-  #         FROM dl_tpc_customer limit 10;
-
-  #         /*
-  #          Verify that a business-analyst cannot access PII data
-  #         */
-  #         SELECT c_first_name, c_last_name, c_customer_sk, c_current_addr_sk
-  #         FROM dl_tpc_customer;
-  # AthenaCampaignManagerNamedQuery:
-  #   Type: 'AWS::Athena::NamedQuery'
-  #   Properties:
-  #     Database: !Ref TPCDBName
-  #     Description: Sample query issued by Campaign Manager.
-  #     Name: LF-CampaignManager-Query
-  #     QueryString: >
-  #       /*
-  #        * Sample Query from a Campaign Manager who is interested in marketing analytics
-  #        */
-
-  #       SELECT count(distinct i.i_item_sk) NumItems, p.p_promo_id PromotionId
-  #       FROM dl_tpc_item i, dl_tpc_promotion p, dl_tpc_web_sales ws WHERE
-  #       i.i_item_sk = ws_item_sk AND ws.ws_promo_sk = p.p_promo_sk GROUP BY
-  #       p.p_promo_id;
-
-  #       /*
-  #        * Make sure Campaign manager cannot access web_page table
-  #        */
-  #       SELECT count(*) FROM dl_tpc_web_page;
 Outputs:
   LFDataLakeBucketName:
     Description: Lake Formation Data Lake Bucket Name

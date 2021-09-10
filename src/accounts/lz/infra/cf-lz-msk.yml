@@ -11,6 +11,21 @@ Metadata:
             - KeyPair
 
 Parameters:
+
+  ComponentID:
+    Description: This templates' component identifier string
+    Type: String
+    Default: consumer-lakeformation
+
+  Env:
+    Description: The environment in which the account is being deployed.
+    Type: String
+    Default: dev
+    AllowedValues:
+      - dev
+      - qa
+      - prod
+  
   ProjectName:
     Type: String
     Description: Project name to link stacks

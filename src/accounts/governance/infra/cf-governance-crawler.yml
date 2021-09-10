@@ -1,0 +1,68 @@
+AWSTemplateFormatVersion: 2010-09-09
+Description: AWSCloudFormationStackSetAdministrationRole to enable use of AWS CloudFormation StackSets.
+
+Parameters:
+  ComponentID:
+    Description: This templates' component identifier string
+    Type: String
+    Default: gov-crawler
+  Environment:
+    Description: The environment in which the account is being deployed.
+    Type: String
+    Default: dev
+    AllowedValues:
+      - dev
+      - qa
+      - prod
+
+Resources:
+  GlueCrawlerRole:
+    Type: AWS::IAM::Role
+    Properties:
+      RoleName: '${Environment}-lakehouse-${ComponentID}-role'
+      AssumeRolePolicyDocument:
+        Version: "2012-10-17"
+        Statement:
+          -
+            Effect: "Allow"
+            Principal:
+              Service:
+                - "glue.amazonaws.com"
+            Action:
+              - "sts:AssumeRole"
+      Path: "/"
+      Policies:
+        -
+          PolicyName: '${Environment}-lakehouse-${ComponentID}-role-policy-1'
+          PolicyDocument:
+            Version: "2012-10-17"
+            Statement:
+              -
+                Effect: "Allow"
+                Action: "s3*" # Need to define the with min permissions
+                Resource:
+                  - !Join [ '', ["arn:aws:s3:::", !Sub "${Env}", "-lakehouse-*"]]
+ 
+  ConsumerDatabase:
+    Type: AWS::Glue::Database
+    Properties:
+      CatalogId: !Ref AWS::AccountId
+      DatabaseInput:
+        Name: '${Environment}-lakehouse-${ComponentID}-database'
+        Description: "Catalog database for the crawler"
+
+
+  GlueCrawler:
+    Type: AWS::Glue::Crawler
+    Properties:
+      Name: '${Environment}-lakehouse-${ComponentID}-crawler'
+      Description: Crawler of desired data resource
+      Role: !Ref GlueCrawlerRole
+      DatabaseName: !Ref ConsumerDatabase
+      Targets:
+        - 
+          S3Targets: 
+            - 
+              ConnectionName: String
+              Path: !Sub "${Environment}-lakehouse-lh-s3-raw"
+      Configuration: "{\"Version\":1.0,\"CrawlerOutput\":{\"Partitions\":{\"AddOrUpdateBehavior\":\"InheritFromTable\"},\"Tables\":{\"AddOrUpdateBehavior\":\"MergeNewColumns\"}}}"

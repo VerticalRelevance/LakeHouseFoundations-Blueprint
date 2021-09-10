@@ -5,11 +5,17 @@ Parameters:
   ComponentID:
     Description: This templates' component identifier string
     Type: String
-  Environment:
-    Description: Which account is the environment being creates
+    Default: consumer-redshift
+
+  Env:
+    Description: The environment in which the account is being deployed.
     Type: String
     Default: dev
     AllowedValues:
       - dev
       - qa
       - prod
+  
+
+Resources:
+  

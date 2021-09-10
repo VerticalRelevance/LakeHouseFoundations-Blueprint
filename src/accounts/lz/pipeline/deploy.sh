@@ -7,20 +7,20 @@
 
 # Deploy
 aws cloudformation deploy \
-    --stack-name "dev-lakehouse-consumer-athena" \
-    --template-file "../infra/cf-consumer-athena.yml" \
-    --capabilities CAPABILITY_NAMED_IAM \
-    --parameter-overrides "ComponentID=consumer-athena" "Env=dev"
-
-aws cloudformation deploy \
-    --stack-name "dev-lakehouse-consumer-catalog" \
-    --template-file "../infra/cf-consumer-catalog.yml" \
-    --parameter-overrides "ComponentID=consumer-catalog" "Env=dev" \
+    --stack-name "dev-lakehouse-lz-main" \
+    --template-file "../infra/cf-lz-main.yml" \
+    --parameter-overrides "ComponentID=lz-main" "Env=dev" \
     --capabilities CAPABILITY_NAMED_IAM
 
 # aws cloudformation deploy \
-#     --stack-name "dev-lakehouse-consumer-lakeformation" \
-#     --template-file "../infra/cf-consumer-lakeformation.yml" \
+#     --stack-name "dev-lakehouse-lz-datasync" \
+#     --template-file "../infra/cf-lz-datasync.yml" \
+#     --capabilities CAPABILITY_NAMED_IAM \
+#     --parameter-overrides "ComponentID=lz-datasync" "Env=dev"
+
+# aws cloudformation deploy \
+#     --stack-name "dev-lakehouse-lz-msk" \
+#     --template-file "../infra/cf-lakehouse-msk.yml" \
 #     --capabilities CAPABILITY_NAMED_IAM \
 #     --parameter-overrides "ComponentID=consumer" "Env=dev"
 

@@ -1,21 +1,22 @@
 #!/bin/bash
-shopt -s nullglob
-mkdir -p templates/
-cp products/*/*.{json,yml} templates/
-cp deploy/*.json templates/
-for f in templates/*; do
-    if cfn_nag_scan --input-path "$f" --blacklist-path ./deploy/blacklist-cfnnag.yml; then
-        echo "$f PASSED"
-    else
-        echo "$f FAILED"
-        touch FAILED
-    fi
-done
 
-if [ -e FAILED ]; then
-  echo cfn-nag FAILED at least once!
-  exit 1
+shopt -s nullglob
+
+args="$@"
+echo "Target path to be supplied as: ${args[0]}."
+
+# if cfn_nag_scan --input-path "${args[0]}" --blacklist-path "blacklist-cfnnag.yml"; then
+if cfn_nag_scan --input-path "${args[0]}"; then
+    echo "Templates in directory ${args[0]} PASSED static testing."
 else
-  echo cfn-nag PASSED on all files!
-  exit 0
+    echo "Templates in directory ${args[0]} FAILED static testing."
+    # touch FAILED
 fi
+
+# if [ -e FAILED ]; then
+#   echo "cfn-nag FAILED at least once!"
+#   exit 1
+# else
+#   echo "cfn-nag PASSED on all files!"
+#   exit 0
+# fi

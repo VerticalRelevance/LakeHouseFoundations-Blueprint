@@ -1,0 +1,41 @@
+version: 0.2
+
+env:
+  variables:
+    DEPLOYMENT_ENV: "dev"
+    TF_VAR_deployment_region: us-east-2
+    FRONTEND_BUCKET_BASE_NAME: "carolina-cloud-group-website-frontend-bucket"
+    ARTIFACT_NAME: "website-frontend"
+
+phases:
+  install:
+    on-failure: ABORT
+    commands:
+      - echo Begin install phase..
+      - . ./install-terraform.sh
+      - echo Install phase complete.
+  pre_build:
+    commands:
+      - echo Begin pre-build phase...
+      - echo Pre-build phase complete.
+  build:
+    on-failure: ABORT
+    commands:
+      - echo Begin build phase...
+
+      # Infrastructure Deployment
+      - export TF_LOG="DEBUG"
+      - . ./deploy-infra.sh # Using POSIX-style here so environment variables propagate.1
+      
+      - echo "Synchronizing S3 deployment files."
+      - aws s3 sync ./site/ "s3://$FRONTEND_BUCKET_FULL_NAME/"
+      - echo "S3 deployment files synchronization complete."
+    finally:
+      - echo Build phase complete.
+
+artifacts:
+  files:
+    - ./
+  base-directory: "site"
+  name: ${ARTIFACT_NAME}
+  s3-prefix: ${BUILD-ID}-

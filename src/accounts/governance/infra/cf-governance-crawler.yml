@@ -6,7 +6,7 @@ Parameters:
     Description: This templates' component identifier string
     Type: String
     Default: gov-crawler
-  Environment:
+  Env:
     Description: The environment in which the account is being deployed.
     Type: String
     Default: dev
@@ -19,7 +19,7 @@ Resources:
   GlueCrawlerRole:
     Type: AWS::IAM::Role
     Properties:
-      RoleName: '${Environment}-lakehouse-${ComponentID}-role'
+      RoleName: !Sub '${Env}-lakehouse-${ComponentID}-role'
       AssumeRolePolicyDocument:
         Version: "2012-10-17"
         Statement:
@@ -33,13 +33,13 @@ Resources:
       Path: "/"
       Policies:
         -
-          PolicyName: '${Environment}-lakehouse-${ComponentID}-role-policy-1'
+          PolicyName: !Sub '${Env}-lakehouse-${ComponentID}-role-policy-1'
           PolicyDocument:
             Version: "2012-10-17"
             Statement:
               -
                 Effect: "Allow"
-                Action: "s3*" # Need to define the with min permissions
+                Action: "s3:*" # Need to define the with min permissions
                 Resource:
                   - !Join [ '', ["arn:aws:s3:::", !Sub "${Env}", "-lakehouse-*"]]
  
@@ -48,21 +48,19 @@ Resources:
     Properties:
       CatalogId: !Ref AWS::AccountId
       DatabaseInput:
-        Name: '${Environment}-lakehouse-${ComponentID}-database'
+        Name: !Sub '${Env}-lakehouse-${ComponentID}-database'
         Description: "Catalog database for the crawler"
 
 
   GlueCrawler:
     Type: AWS::Glue::Crawler
     Properties:
-      Name: '${Environment}-lakehouse-${ComponentID}-crawler'
+      Name: !Sub '${Env}-lakehouse-${ComponentID}-crawler'
       Description: Crawler of desired data resource
       Role: !Ref GlueCrawlerRole
       DatabaseName: !Ref ConsumerDatabase
       Targets:
-        - 
-          S3Targets: 
-            - 
-              ConnectionName: String
-              Path: !Sub "${Environment}-lakehouse-lh-s3-raw"
+        S3Targets: 
+          - 
+            Path: !Sub "${Env}-lakehouse-lh-s3-curated"
       Configuration: "{\"Version\":1.0,\"CrawlerOutput\":{\"Partitions\":{\"AddOrUpdateBehavior\":\"InheritFromTable\"},\"Tables\":{\"AddOrUpdateBehavior\":\"MergeNewColumns\"}}}"

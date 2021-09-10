@@ -306,6 +306,7 @@ Resources:
   AdminUser:
     Type: 'AWS::IAM::User'
     Properties:
+      UserName: !Sub "${Env}-lakehouse-${ComponentID}-lf-admin"
       Path: /
       LoginProfile:
         Password: !Ref TestUserPassword
@@ -360,10 +361,10 @@ Resources:
       ManagedPolicyArns:
         - 'arn:aws:iam::aws:policy/AWSLakeFormationCrossAccountManager'
         - 'arn:aws:iam::aws:policy/AmazonEC2ReadOnlyAccess'
-      UserName: !Sub "${Env}-lakehouse-${ComponentID}-lf-admin"
   DeveloperUser:
     Type: 'AWS::IAM::User'
     Properties:
+      UserName: !Sub "${Env}-lakehouse-${ComponentID}-lf-developer"
       Path: /
       LoginProfile:
         Password: !Ref TestUserPassword
@@ -386,10 +387,10 @@ Resources:
                       - /athena-results/*
       ManagedPolicyArns:
         - 'arn:aws:iam::aws:policy/AmazonAthenaFullAccess'
-      UserName: !Sub "${Env}-lakehouse-${ComponentID}-lf-developer"
   CampaignManagerUser:
     Type: 'AWS::IAM::User'
     Properties:
+      UserName: !Sub "${Env}-lakehouse-${ComponentID}-lf-campaign-manager"
       Path: /
       LoginProfile:
         Password: !Ref TestUserPassword
@@ -412,11 +413,10 @@ Resources:
                       - /athena-results/*
       ManagedPolicyArns:
         - 'arn:aws:iam::aws:policy/AmazonAthenaFullAccess'
-      UserName: !Sub "${Env}-lakehouse-${ComponentID}-lf-campaign-manager"
-
   BusinessAnalystUser:
     Type: 'AWS::IAM::User'
     Properties:
+      UserName: !Sub "${Env}-lakehouse-${ComponentID}-lf-business-analyst"
       Path: /
       LoginProfile:
         Password: !Ref TestUserPassword
@@ -439,7 +439,6 @@ Resources:
                       - /athena-results/*
       ManagedPolicyArns:
         - 'arn:aws:iam::aws:policy/AmazonAthenaFullAccess'
-      UserName: !Sub "${Env}-lakehouse-${ComponentID}-lf-business-analyst"
 
 Outputs:
   LFDataLakeBucketName:

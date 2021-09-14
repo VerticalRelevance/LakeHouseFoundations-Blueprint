@@ -15,7 +15,7 @@ Below is the target infrastructure diagram.
 
 ![TARGET ARCH DIAGRAM]
 
-See the section below on folder and file structures below for more information on components shown above.
+See the section on folder and file structures below for more information on components shown above.
 
 # Source code structure & conventions
 ## Naming Conventions
@@ -23,7 +23,7 @@ Names for resource definitions in any of the templates in this repository will b
 **"${Environment}-${ComponentID}-<ResourceType>-<RelevantSuffix>"**
 Note that, in a pipeline executing an SDLC through to multiple environments, it is intended that CodeBuild pass the relevant parameter values to the Cloudformation deployments, based on what environment the CodeBuild deployment is targeting.
 Where:
-- Environment - The environment the templates are deployed in.
+- Env - The environment the templates are deployed in.
 - ComponentID - The logical identifier of the infrastructure template. See the next section for further detail.
 - ResourceType - Refers to a general name of the resource. For example, "S3"
 - RelevantSuffix [Optional] - Added when you need more than one resource definition in the same template of the same type. For example, "dev-consumer-athena-s3-src" and "dev-consumer-athena-s3-2".
@@ -67,6 +67,7 @@ Infrastructure definitions are grouped by each account's resources to be provisi
 [Changing default Lakeformation Security Settings]: https://docs.aws.amazon.com/lake-formation/latest/dg/change-settings.html 
 [Resource Linking a Shared Catalog Database]: https://docs.aws.amazon.com/lake-formation/latest/dg/creating-resource-links.html
 [Sharing Catalog Resources X-ACNT]: https://docs.aws.amazon.com/lake-formation/latest/dg/sharing-catalog-resources.html
+[Lake Formation Governed Tables]: https://aws.amazon.com/blogs/big-data/part-1-effective-data-lakes-using-aws-lake-formation-part-1-getting-started-with-governed-tables/
 
 ### Resource Security Setup Links
 #### Cross-account LakeFormation Documentation
@@ -78,6 +79,7 @@ Infrastructure definitions are grouped by each account's resources to be provisi
 #### Redshift Spectrum
 [Spectrum/LakeFormation]: https://docs.aws.amazon.com/redshift/latest/dg/spectrum-lake-formation.html
 [Athena Federated Query??]: https://github.com/awslabs/aws-athena-query-federation/blob/master/athena-example/athena-example.yaml
+[AWS RedshiftSpectrum POC]: https://github.com/aws-samples/aws-redshift-spectrum-poc/blob/master/cf-templates/redshift-spectrum-poc-env.template
 #### LakeFormation/Redshift-Spectrum/Athena
 [To create an IAM role for Amazon Redshift using an AWS Glue Data Catalog enabled for AWS Lake Formation]: https://docs.aws.amazon.com/redshift/latest/dg/c-getting-started-using-spectrum-create-role.html#spectrum-get-started-create-role-lake-formation
 

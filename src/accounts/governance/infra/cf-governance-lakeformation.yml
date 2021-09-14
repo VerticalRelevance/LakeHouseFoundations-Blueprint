@@ -242,12 +242,12 @@ Resources:
                   - !Join 
                     - ''
                     - - 'arn:aws:s3:::'
-                      - !Ref DataLakeBucket
+                      - 'dev-lakehouse-lh-s3-curated'
                       - /*
                   - !Join 
                     - ''
                     - - 'arn:aws:s3:::'
-                      - !Ref DataLakeBucket
+                      - 'dev-lakehouse-lh-s3-curated'
         - PolicyName: Glue-Demo-Access-Policy
           PolicyDocument:
             Version: 2012-10-17
@@ -286,18 +286,48 @@ Resources:
                     - ''
                     - - 'arn:aws:iam::'
                       - !Ref 'AWS::AccountId'
-                      - ':role/LF-GlueServiceRole'
+                      - !Sub ':role/${Env}-lakehouse-${ComponentID}-glue-service-role'
                   - !Join 
                     - ''
                     - - 'arn:aws:iam::'
                       - !Ref 'AWS::AccountId'
                       - ':role/LakeFormationWorkflowRole'
+        - PolicyName: !Sub '${Env}-lakehouse-${ComponentID}-role-policy-1'
+          PolicyDocument:
+            Version: "2012-10-17"
+            Statement:
+              -
+                Effect: "Allow"
+                Action: 
+                  - "s3:*"
+                  - "glue:*"
+                  - "logs:*"
+                  - "lakeformation:*"
+                Resource:
+                  - !Join [ '', ["arn:aws:s3:::*"]] # , !Sub "${Env}", "-lakehouse-*"]]
+                  - !Join [ '', ["arn:aws:glue:*:*:", "*"]]
+                  - !Join [ '', ["arn:aws:lakeformation:*:*", "*"]]
+                  - !Join [ '', ["arn:aws:logs:*:*:", "*"]]
       RoleName: !Sub "${Env}-lakehouse-${ComponentID}-glue-service-role"
   
-  DataLakeBucket:
-    Type: 'AWS::S3::Bucket'
+  GovGlueCrawler:
+    Type: AWS::Glue::Crawler
     Properties:
-      BucketName: !Sub "${Env}-lakehouse-${ComponentID}-data-lake-bucket" 
+      Name: !Sub '${Env}-lakehouse-${ComponentID}-datalake-crawler'
+      Description: Crawler of desired data resource
+      Role: !Ref GlueServiceRole # GovGlueCatalogCrawlerRole
+      DatabaseName: !Sub '${Env}-lakehouse-${ComponentID}-datalake-catalog'
+      Targets:
+        S3Targets: 
+          - 
+            Path: !Sub "${Env}-lakehouse-lh-s3-curated"
+      Configuration: "{\"Version\":1.0,\"CrawlerOutput\":{\"Partitions\":{\"AddOrUpdateBehavior\":\"InheritFromTable\"},\"Tables\":{\"AddOrUpdateBehavior\":\"MergeNewColumns\"}}}"
+
+
+  # DataLakeBucket:
+  #   Type: 'AWS::S3::Bucket'
+  #   Properties:
+  #     BucketName: !Sub "${Env}-lakehouse-${ComponentID}-data-lake-bucket" 
   LFWorkshopBucket:
     Type: 'AWS::S3::Bucket'
     Properties:
@@ -356,7 +386,7 @@ Resources:
               - Effect: Allow
                 Action: 'iam:PassRole'
                 Resource:
-                  - 'arn:aws:iam::*:role/LF-GlueServiceRole'
+                  - !Sub 'arn:aws:iam::*:role/${Env}-lakehouse-${ComponentID}-glue-service-role'
                   - 'arn:aws:iam::*:role/LF-EMR-Notebook*'
       ManagedPolicyArns:
         - 'arn:aws:iam::aws:policy/AWSLakeFormationCrossAccountManager'
@@ -441,9 +471,9 @@ Resources:
         - 'arn:aws:iam::aws:policy/AmazonAthenaFullAccess'
 
 Outputs:
-  LFDataLakeBucketName:
-    Description: Lake Formation Data Lake Bucket Name
-    Value: !Ref DataLakeBucket
+  # LFDataLakeBucketName:
+  #   Description: Lake Formation Data Lake Bucket Name
+  #   Value: !Ref DataLakeBucket
   LFWorkshopBucketName:
     Description: Lake Formation Workshop Bucket Name
     Value: !Ref LFWorkshopBucket

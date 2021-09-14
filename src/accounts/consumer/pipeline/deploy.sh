@@ -12,11 +12,11 @@ aws cloudformation deploy \
     --capabilities CAPABILITY_NAMED_IAM \
     --parameter-overrides "ComponentID=consumer-athena" "Env=dev"
 
-aws cloudformation deploy \
-    --stack-name "dev-lakehouse-consumer-catalog" \
-    --template-file "../infra/cf-consumer-catalog.yml" \
-    --parameter-overrides "ComponentID=consumer-catalog" "Env=dev" \
-    --capabilities CAPABILITY_NAMED_IAM
+# aws cloudformation deploy \
+#     --stack-name "dev-lakehouse-consumer-catalog" \
+#     --template-file "../infra/cf-consumer-catalog.yml" \
+#     --parameter-overrides "ComponentID=consumer-catalog" "Env=dev" \
+#     --capabilities CAPABILITY_NAMED_IAM
 
 # aws cloudformation deploy \
 #     --stack-name "dev-lakehouse-consumer-lakeformation" \
@@ -24,9 +24,10 @@ aws cloudformation deploy \
 #     --capabilities CAPABILITY_NAMED_IAM \
 #     --parameter-overrides "ComponentID=consumer" "Env=dev"
 
-# aws cloudformation create-stack \
-#     --stack-name "dev-lakehouse-consumer" \
-#     --template-body "file://../infra/cf-consumer-reshift-spectrum.yml" \
-#     --capabilities CAPABILITY_NAMED_IAM
+aws cloudformation deploy \
+    --stack-name "dev-lakehouse-consumer-redshiftspectrum" \
+    --template-file "../infra/cf-consumer-redshift-spectrum.yml" \
+    --parameter-overrides "ComponentID=consumer-catalog" "Env=dev" \
+    --capabilities CAPABILITY_NAMED_IAM
 
 # Run integration tests for deployment

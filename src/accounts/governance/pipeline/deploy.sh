@@ -13,10 +13,10 @@ aws cloudformation deploy \
     --capabilities CAPABILITY_NAMED_IAM \
     --parameter-overrides "ComponentID=gov-lakeformation" "Env=dev"
 
-aws cloudformation deploy \
-    --stack-name "dev-lakehouse-governance-crawler" \
-    --template-file "../infra/cf-governance-crawler.yml" \
-    --capabilities CAPABILITY_NAMED_IAM \
-    --parameter-overrides "ComponentID=gov-crawler" "Env=dev"
+# aws cloudformation deploy \
+#     --stack-name "dev-lakehouse-governance-crawler" \
+#     --template-file "../infra/cf-governance-crawler.yml" \
+#     --capabilities CAPABILITY_NAMED_IAM \
+#     --parameter-overrides "ComponentID=gov-crawler" "Env=dev"
 
 # Run integration tests for deployment

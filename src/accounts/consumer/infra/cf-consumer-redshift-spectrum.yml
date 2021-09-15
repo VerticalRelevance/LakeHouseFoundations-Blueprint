@@ -1,6 +1,7 @@
 AWSTemplateFormatVersion: 2010-09-09
-Description: See https://github.com/aws-samples/aws-redshift-spectrum-poc/blob/master/cf-templates/redshift-spectrum-poc-env.template for original reference.
+Description: Consumer-account Redshift Spectrum resource definitions.
 
+# See https://github.com/aws-samples/aws-redshift-spectrum-poc/blob/master/cf-templates/redshift-spectrum-poc-env.template for original reference.
 Metadata:
   'AWS::CloudFormation::Interface':
     ParameterGroups:
@@ -97,7 +98,7 @@ Parameters:
       Provide the latest Windows Full Base AMI ID: 
       http://docs.aws.amazon.com/AWSEC2/latest/WindowsGuide/finding-an-ami.html
     Type: String
-    Default: 'ami-0ff460b217b1af4ef' #'resolve:ssm:/aws/service/ami-amazon-linux-latest/amzn2-ami-hvm-x86_64-gp2'
+    Default: 'resolve:ssm:/aws/service/ami-amazon-linux-latest/amzn2-ami-hvm-x86_64-gp2' # 'ami-0ff460b217b1af4ef'
     MinLength: 10   
   pBastionHostEC2KeyPair:
     Description: >-

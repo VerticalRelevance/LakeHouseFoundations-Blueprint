@@ -1,0 +1,167 @@
+AWSTemplateFormatVersion: 2010-09-09
+Description: Landing Zone Glue Resources
+
+Parameters:
+  ComponentID:
+    Description: This templates' component identifier string
+    Type: String
+    Default: lz-main
+  Env:
+    Description: The environment in which the account is being deployed.
+    Type: String
+    Default: dev
+    AllowedValues:
+      - dev
+      - qa
+      - prod
+
+Resources:
+  ProducerWorkflow:
+    Type: AWS::Glue::Workflow
+    Properties:
+      Name: !Sub "${Env}-lakehouse-${ComponentID}-producer-workflow"
+      Description: "Workflow to orchestrate data ingestion into the S3 data lake."
+
+
+  # GlueStudioRole:
+  #   Type: 'AWS::IAM::Role'
+  #   Properties:
+  #     RoleName: !Sub "${Env}-lakehouse-${ComponentID}-glue-studio-role"
+  #     AssumeRolePolicyDocument:
+  #       Version: 2012-10-17
+  #       Statement:
+  #         - Effect: Allow
+  #           Principal:
+  #             Service: 'glue.amazonaws.com'
+  #           Action: 'sts:AssumeRole'
+  #     Path: /
+  #     ManagedPolicyArns:
+  #       - "arn:aws:iam::aws:policy/service-role/AWSGlueServiceRole"
+  #     Policies:
+  #       - PolicyName: !Sub "${Env}-${ComponentID}-lakehouse-role-policy"
+  #         PolicyDocument:
+  #           Version: 2012-10-17
+  #           Statement:
+  #             - Action:
+  #                 - "s3:*"
+  #                 - "lakeformation:*"
+  #               Effect: Allow
+  #               Resource: 
+  #                 - !Join [ '', ["arn:aws:s3:::", !Sub "${Env}", "-lakehouse-", !Sub "${ComponentID}", "-producer-bucket/*"]]
+  #                 - !Join [ '', ["arn:aws:s3:::", !Sub "${Env}", "-lakehouse-", !Sub "${ComponentID}", "-lz-bucket/*"]]
+  #                 - !Join [ '', ["arn:aws:s3:::", !Sub "${Env}", "-lakehouse-lh-s3-raw/*"]]
+  #                 - !Join [ '', ["arn:aws:s3:::", !Sub "${Env}", "-lakehouse-lh-s3-transformed/*"]]
+  #                 - !Join [ '', ["arn:aws:s3:::", !Sub "${Env}", "-lakehouse-lh-s3-curated/*"]]
+  #                 - !Join [ '', ["arn:aws:s3:::", !Sub "${Env}", "-lakehouse-lh-s3-glue-studio-temporary/*"]]
+
+  GlueJobRole:
+    Type: AWS::IAM::Role
+    Properties:
+      AssumeRolePolicyDocument:
+        Version: 2012-10-17
+        Statement:
+          - Effect: Allow
+            Principal:
+              Service:
+                - glue.amazonaws.com
+                - lakeformation.amazonaws.com
+            Action: 'sts:AssumeRole'
+      ManagedPolicyArns:
+        - 'arn:aws:iam::aws:policy/service-role/AWSGlueServiceRole'
+      Policies:
+        - PolicyName: !Sub '${Env}-lakehouse-${ComponentID}-role-policy-1'
+          PolicyDocument:
+            Version: "2012-10-17"
+            Statement:
+              -
+                Effect: "Allow"
+                Action: 
+                  - "s3:*"
+                  - "glue:*"
+                  - "logs:*"
+                  - "lakeformation:*"
+                Resource:
+                  - !Join [ '', ["arn:aws:s3:::*"]]
+                  - !Join [ '', ["arn:aws:glue:*:*:", "*"]]
+                  - !Join [ '', ["arn:aws:lakeformation:*:*", "*"]]
+                  - !Join [ '', ["arn:aws:logs:*:*:", "*"]]
+
+  PostDataJobTrigger:
+    Type: AWS::Glue::Trigger
+    Properties:
+      Name: !Sub "${Env}-lakehouse-${ComponentID}-post-data-job-trigger"
+      WorkflowName: !Ref ProducerWorkflow
+      Type: "ON_DEMAND"
+      Description: "Triggers the data producer workflow."
+      Actions:
+        - JobName: !Ref PostDataJob
+          Arguments:
+            "--job-bookmark-option": "job-bookmark-enable"
+
+  PostDataJob:
+    Type: AWS::Glue::Job
+    Properties:
+      Name: !Sub "${Env}-lakehouse-${ComponentID}-data-curate-job"
+      Description: "Curates cleaned data into the target data lake bucket."
+      MaxRetries: 3
+      Role: !Ref GlueJobRole
+      Command:
+        Name: glueetl
+        PythonVersion: "3"
+        ScriptLocation: !Join ['', ["s3://", !ImportValue "LH:GlueJobScriptBucketName",  "/scripts_lz/post-data.py"]]
+      GlueVersion: "1.0"
+      ExecutionProperty:
+        MaxConcurrentRuns: 2
+      WorkerType: Standard
+      NumberOfWorkers: 2
+      DefaultArguments:  
+        "--LOG_LEVEL": "INFO"
+        "--enable-continuous-cloudwatch-log": true
+        "--enable-continuous-log-filter": true
+        "--enable-s3-parquet-optimized-committer": true
+        "--enable-metrics": ""
+        "--encryption-type": sse-s3
+        "--job-bookmark-option": job-bookmark-enable
+
+  ProducerDataJobTrigger:
+    Type: AWS::Glue::Trigger
+    Properties:
+      Name: !Sub "${Env}-lakehouse-${ComponentID}-producer-job-trigger"
+      WorkflowName: !Ref ProducerWorkflow
+      Type: "CONDITIONAL"
+      StartOnCreation: true
+      Description: "Initiates curation job under the condition that the data cleaning job runs successfully."
+      Actions:
+        - JobName: !Ref ProducerJob
+          Arguments:
+            "--job-bookmark-option": "job-bookmark-enable"
+      Predicate:
+        Conditions:
+          - LogicalOperator: EQUALS
+            JobName: !Ref PostDataJob
+            State: SUCCEEDED
+
+  ProducerJob:
+    Type: AWS::Glue::Job
+    Properties:
+      Name: !Sub "${Env}-lakehouse-${ComponentID}-producer-job"
+      Description: "Producer into the lake house raw bucket."
+      MaxRetries: 3
+      Role: !Ref GlueJobRole
+      Command:
+        Name: glueetl
+        PythonVersion: "3"
+        ScriptLocation: !Join ['', ["s3://", !ImportValue "LH:GlueJobScriptBucketName",  "/scripts_lz/produce-data.py"]]
+      GlueVersion: "1.0"
+      ExecutionProperty:
+        MaxConcurrentRuns: 2
+      WorkerType: Standard
+      NumberOfWorkers: 2
+      DefaultArguments:  
+        "--LOG_LEVEL": "INFO"
+        "--enable-continuous-cloudwatch-log": true
+        "--enable-continuous-log-filter": true
+        "--enable-s3-parquet-optimized-committer": true
+        "--enable-metrics": ""
+        "--encryption-type": sse-s3
+        "--job-bookmark-option": job-bookmark-enable

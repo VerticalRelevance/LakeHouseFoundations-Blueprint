@@ -8,9 +8,19 @@
 # Deploy
 aws cloudformation deploy \
     --stack-name "dev-lakehouse-lz-main" \
-    --template-file "../infra/cf-lz-main.yml" \
+    --template-file "../infra/cf-lz-s3.yml" \
     --parameter-overrides "ComponentID=lz-main" "Env=dev" \
     --capabilities CAPABILITY_NAMED_IAM
+
+# Glue Job Scripts to S3
+aws s3 sync "../scripts" "s3://dev-lakehouse-lh-s3-glue-resources/scripts_lz"
+
+aws cloudformation deploy \
+    --stack-name "dev-lakehouse-lz-glue" \
+    --template-file "../infra/cf-lz-glue.yml" \
+    --capabilities CAPABILITY_NAMED_IAM \
+    --parameter-overrides "ComponentID=lz-glue" "Env=dev"
+
 
 # aws cloudformation deploy \
 #     --stack-name "dev-lakehouse-lz-datasync" \

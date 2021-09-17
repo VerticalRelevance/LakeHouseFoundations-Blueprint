@@ -67,6 +67,7 @@ Infrastructure definitions are grouped by each account's resources to be provisi
 [Changing default Lakeformation Security Settings]: https://docs.aws.amazon.com/lake-formation/latest/dg/change-settings.html 
 [Resource Linking a Shared Catalog Database]: https://docs.aws.amazon.com/lake-formation/latest/dg/creating-resource-links.html
 [Sharing Catalog Resources X-ACNT]: https://docs.aws.amazon.com/lake-formation/latest/dg/sharing-catalog-resources.html
+[Video - Data Mesh Architecture on AWS]: https://www.youtube.com/watch?v=YPYODx4Pfdc
 [Lake Formation Governed Tables]: https://aws.amazon.com/blogs/big-data/part-1-effective-data-lakes-using-aws-lake-formation-part-1-getting-started-with-governed-tables/
 
 ### Resource Security Setup Links
@@ -83,5 +84,9 @@ Infrastructure definitions are grouped by each account's resources to be provisi
 #### LakeFormation/Redshift-Spectrum/Athena
 [To create an IAM role for Amazon Redshift using an AWS Glue Data Catalog enabled for AWS Lake Formation]: https://docs.aws.amazon.com/redshift/latest/dg/c-getting-started-using-spectrum-create-role.html#spectrum-get-started-create-role-lake-formation
 
+### Misc
+[DataBrew Blog with Example CF Stack]: https://aws.amazon.com/blogs/big-data/preparing-data-for-ml-models-using-aws-glue-databrew-in-a-jupyter-notebook/
+
 ## Images
 [TARGET ARCH DIAGRAM]: ./resources/images/lakehouse-ref-arch-1.png "Reference Architecture Diagram"
+[THE LAKE HOUSE APPROACH]: ./resources/images/aws-the-lake-house-approach.png "\"The Lake House Approach\""

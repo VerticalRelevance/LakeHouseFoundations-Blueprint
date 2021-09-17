@@ -1,0 +1,52 @@
+AWSTemplateFormatVersion: 2010-09-09
+Description: Landing Zone s3 resources
+
+Parameters:
+
+  ComponentID:
+    Description: This templates' component identifier string
+    Type: String
+    Default: lz-main
+
+  Env:
+    Description: The environment in which the account is being deployed.
+    Type: String
+    Default: dev
+    AllowedValues:
+      - dev
+      - qa
+      - prod
+
+  ProjectName:
+    Type: String
+    Description: Project name to link stacks
+    Default: consumer-lakeformation
+
+Resources:
+
+  LandingZoneBucket:
+    Type: AWS::S3::Bucket
+    Properties: 
+      BucketName: !Sub "${Env}-lakehouse-${ComponentID}-lz-bucket"
+      BucketEncryption: 
+        ServerSideEncryptionConfiguration: 
+          - ServerSideEncryptionByDefault:
+              SSEAlgorithm: AES256
+              # SSEAlgorithm: 'aws:kms'
+              # KMSMasterKeyID: KMS-KEY-ARN
+
+  ProducerBucket:
+    Type: AWS::S3::Bucket
+    Properties: 
+      BucketName: !Sub "${Env}-lakehouse-${ComponentID}-producer-bucket"
+      BucketEncryption: 
+        ServerSideEncryptionConfiguration: 
+          - ServerSideEncryptionByDefault:
+              SSEAlgorithm: AES256
+
+Outputs:
+  LzBucketArn:
+    Value: !GetAtt LandingZoneBucket.Arn
+    Export:
+      Name: !Sub "LZ:LzBucketArn"
+    Description: "Landing Zone bucket ARN"

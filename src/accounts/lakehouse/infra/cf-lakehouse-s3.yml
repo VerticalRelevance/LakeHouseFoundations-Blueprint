@@ -25,6 +25,15 @@ Resources:
           - ServerSideEncryptionByDefault:
               SSEAlgorithm: AES256
 
+  GlueJobScriptBucket:
+    Type: AWS::S3::Bucket
+    Properties:
+      BucketName: !Sub '${Environment}-lakehouse-${ComponentID}-glue-resources'
+      BucketEncryption: 
+        ServerSideEncryptionConfiguration: 
+          - ServerSideEncryptionByDefault:
+              SSEAlgorithm: AES256
+
   RawZoneBucket:
     Type: AWS::S3::Bucket
     Properties: 
@@ -57,3 +66,55 @@ Resources:
               SSEAlgorithm: AES256
               # SSEAlgorithm: 'aws:kms'
               # KMSMasterKeyID: KMS-KEY-ARN
+
+Outputs:
+
+  RawZoneBucketArn:
+    Value: !GetAtt RawZoneBucket.Arn
+    Export:
+      Name: !Sub "LH:RawZoneBucketArn"
+    Description: "Lake House raw bucket ARN"
+
+  RawZoneBucketName:
+    Value: !Ref RawZoneBucket
+    Export:
+      Name: !Sub "LH:RawZoneBucketName"
+    Description: "Lake House raw bucket name"
+
+  TransformedZoneBucketArn:
+    Value: !GetAtt TransformedZoneBucket.Arn
+    Export:
+      Name: !Sub "LH:TransformedZoneBucketArn"
+    Description: "Lake House transformed (cleaned data) bucket ARN"
+
+  TransformedZoneBucketName:
+    Value: !Ref TransformedZoneBucket
+    Export:
+      Name: !Sub "LH:TransformedZoneBucketName"
+    Description: "Lake House transformed bucket name"
+
+
+  CuratedZoneBucketArn:
+    Value: !GetAtt CuratedZoneBucket.Arn
+    Export:
+      Name: !Sub "LH:CuratedZoneBucketArn"
+    Description: "Lake House curated (data lake) bucket ARN"
+
+  CuratedZoneBucketName:
+    Value: !Ref CuratedZoneBucket
+    Export:
+      Name: !Sub "LH:CuratedZoneBucketName"
+    Description: "Lake House curated bucket name"
+
+
+  GlueJobScriptBucketArn:
+    Value: !GetAtt GlueJobScriptBucket.Arn
+    Export:
+      Name: !Sub "LH:GlueJobScriptBucketArn"
+    Description: "Lake House Glue job scripts for running data ingestion pipeline"
+
+  GlueJobScriptBucketName:
+    Value: !Ref GlueJobScriptBucket
+    Export:
+      Name: "LH:GlueJobScriptBucketName"
+    Description: "Lake House glue job resources bucket name."

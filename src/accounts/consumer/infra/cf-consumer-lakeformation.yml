@@ -480,18 +480,19 @@ Resources:
     Properties:
       Path: /
       LoginProfile:
-        Password: !Ref TestUserPassword
+        Password: !Ref TestUserPassword 
         PasswordResetRequired: false
       Policies:
-        - PolicyName: LF-Athena-Query-Result-Policy
+        - PolicyName: !Sub "${Env}-lakehouse-${ComponentID}-lf-campaign-manager-role-policy"
           PolicyDocument:
             Version: 2012-10-17
             Statement:
               - Effect: Allow
                 Action:
-                  - 's3:Put*'
+                  - 's3:Put*' # Testing first without explicit LF access (should be configured through LF, not IAM)
                   - 's3:Get*'
                   - 's3:List*'
+                  - 'redshift:*'
                 Resource:
                   - !Join 
                     - ''
@@ -500,7 +501,7 @@ Resources:
                       - /athena-results/*
       ManagedPolicyArns:
         - 'arn:aws:iam::aws:policy/AmazonAthenaFullAccess'
-      UserName: !Sub "${Env}-lakehouse-${ComponentID}-lf-campaign-manager"
+      UserName: !Sub "${Env}-lakehouse-${ComponentID}-lf-campaign-manager-role"
 
   BusinessAnalystUser:
     Type: 'AWS::IAM::User'

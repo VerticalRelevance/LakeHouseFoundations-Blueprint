@@ -53,15 +53,22 @@ Infrastructure definitions are grouped by each account's resources to be provisi
   - cf-consumer-redshift.yml
   - cf-consumer-lakeformation.yml
 
+# Permissioning
+In order to list the permissions granted to any user in Lake Formation, use the following CLI command:
+
+aws iam list-policies-granting-service-access --arn arn:aws:iam::899456967600:user/dev-lakehouse-gov-lakeformation-lf-campaign-manager --service-namespaces glue
+
+aws iam list-policies-granting-service-access --arn arn:aws:iam::899456967600:user/dev-lakehouse-gov-lakeformation-lf-developer --service-namespaces glue
 
 
 # Reference
 
 ## Links
 
-### AWS Lake House Architecture
+### Lake House Architecture
 [Redshift/Lake House Architecture]: https://aws.amazon.com/redshift/lake-house-architecture/ 
 [Data Lake and Data Mesh Architectures]: https://aws.amazon.com/blogs/big-data/design-a-data-mesh-architecture-using-aws-lake-formation-and-aws-glue/
+[Databricks Definitive Lake House Concepts]: https://databricks.com/research/lakehouse-a-new-generation-of-open-platforms-that-unify-data-warehousing-and-advanced-analytics
 
 ### Lakeformation Setup
 [Changing default Lakeformation Security Settings]: https://docs.aws.amazon.com/lake-formation/latest/dg/change-settings.html 

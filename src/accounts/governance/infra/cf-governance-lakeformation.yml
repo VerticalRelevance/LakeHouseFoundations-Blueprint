@@ -373,19 +373,23 @@ Resources:
               - Effect: Allow
                 Action: 'iam:PassRole'
                 Resource:
-                  - !Sub 'arn:aws:iam::*:role/${Env}-lakehouse-${ComponentID}-glue-service-role'
-                  - 'arn:aws:iam::*:role/LF-EMR-Notebook*'
+                  - '*'
       ManagedPolicyArns:
         - 'arn:aws:iam::aws:policy/AWSLakeFormationCrossAccountManager'
         - 'arn:aws:iam::aws:policy/AmazonEC2ReadOnlyAccess'
   DeveloperUser:
     Type: 'AWS::IAM::User'
     Properties:
-      UserName: !Sub "${Env}-lakehouse-${ComponentID}-lf-developer"
+      UserName: !Sub "${Env}-lakehouse-${ComponentID}-lf-hr-developer"
       Path: /
       LoginProfile:
         Password: !Ref TestUserPassword
         PasswordResetRequired: false
+      Tags:
+        - Key: hr-developer
+          Value: hr-developer
+        - Key: hr-group
+          Value: hr-developer
       Policies:
         - PolicyName: LF-Athena-Query-Result-Policy
           PolicyDocument:
@@ -393,28 +397,30 @@ Resources:
             Statement:
               - Effect: Allow
                 Action:
-                  - 's3:Put*'
-                  - 's3:Get*'
-                  - 's3:List*'
+                  - 's3:*'
                   - 'glue:*'
                   - 'lakeformation:*'
-                  - 'redshift:*'
+                  - 'athena:StartQueryExecution'
+                  - 'athena:GetWorkGroup'
+                  - 'athena:Get*'
+                  # - 'glue:*'
+                  # - 'lakeformation:*'
+                  # - 'redshift:*'
                 Resource:
-                  - !Join 
-                    - ''
-                    - - 'arn:aws:s3:::'
-                      - !Ref LFWorkshopBucket
-                      - /athena-results/*
-      ManagedPolicyArns:
-        - 'arn:aws:iam::aws:policy/AmazonAthenaFullAccess'
+                  - '*'
+                  # - !Join ['', ['arn:aws:s3:::', !Ref LFWorkshopBucket, '/athena-results/*']]
+                  # - 'arn:aws:athena:us-east-2:899456967600:*'
   CampaignManagerUser:
     Type: 'AWS::IAM::User'
     Properties:
-      UserName: !Sub "${Env}-lakehouse-${ComponentID}-lf-campaign-manager"
+      UserName: !Sub "${Env}-lakehouse-${ComponentID}-lf-hr-manager"
       Path: /
       LoginProfile:
         Password: !Ref TestUserPassword
         PasswordResetRequired: false
+      Tags:
+        - Key: hr-group
+          Value: hr-manager
       Policies:
         - PolicyName: LF-Athena-Query-Result-Policy
           PolicyDocument:
@@ -422,20 +428,32 @@ Resources:
             Statement:
               - Effect: Allow
                 Action:
-                  - 's3:Put*'
-                  - 's3:Get*'
-                  - 's3:List*'
+                  - 's3:*'
                   - 'glue:*'
+                  - 'athena:StartQueryExecution'
+                  - 'athena:GetWorkGroup'
+                  - 'athena:Get*'
                   - 'lakeformation:*'
                   - 'redshift:*'
+                  - 'redshift-data:ExecuteStatement'
+                  - 'iam:ListUsers' # Have to provide iam actions for grants (data mesh functionality)
+                  - 'iam:ListRoles'
+                  - 'iam:GetRole'
+                  - 'iam:GetRolePolicy'
+                  - 'tag:Get*'
+                  - 'cloudtrail:DescribeTrails'
+                  - 'cloudtrail:LookupEvents'
                 Resource:
-                  - !Join 
-                    - ''
-                    - - 'arn:aws:s3:::'
-                      - !Ref LFWorkshopBucket
-                      - /athena-results/*
-      ManagedPolicyArns:
-        - 'arn:aws:iam::aws:policy/AmazonAthenaFullAccess'
+                  - '*'
+                  # - !Join ['', ['arn:aws:s3:::', !Ref LFWorkshopBucket, '/athena-results/*']]
+                  # - !Sub 'arn:aws:iam::*:role/${Env}-lakehouse-${ComponentID}-glue-service-role'
+                  # - 'arn:aws:glue:us-east-2:899456967600:*' # Added because without, the associated persona could not perform glue:SearchTables
+                  # - 'arn:aws:lakeformation:us-east-2:899456967600:*' # Added because without, the associated persona could not perform glue:SearchTables
+                  # - 'arn:aws:athena:us-east-2:899456967600:*'
+              - Effect: Allow
+                Action: 'iam:PassRole'
+                Resource:
+                  - '*'
   BusinessAnalystUser:
     Type: 'AWS::IAM::User'
     Properties:

@@ -6,7 +6,7 @@ Parameters:
   ComponentID:
     Description: This templates' component identifier string
     Type: String
-    Default: lz-main
+    Default: lz-s3
 
   Env:
     Description: The environment in which the account is being deployed.
@@ -17,6 +17,14 @@ Parameters:
       - qa
       - prod
 
+  Region:
+    Description: The region for the template to be deployed.
+    Type: String
+    Default: us-east-2
+    AllowedValues:
+      - us-east-2
+      - us-east-1
+
   ProjectName:
     Type: String
     Description: Project name to link stacks
@@ -24,10 +32,19 @@ Parameters:
 
 Resources:
 
+  DeploymentBucket:
+    Type: AWS::S3::Bucket
+    Properties:
+      BucketName: !Sub '${Env}-lakehouse-${ComponentID}-resources-${AWS::AccountId}-${Region}'
+      BucketEncryption: 
+        ServerSideEncryptionConfiguration: 
+          - ServerSideEncryptionByDefault:
+              SSEAlgorithm: AES256
+  
   LandingZoneBucket:
     Type: AWS::S3::Bucket
     Properties: 
-      BucketName: !Sub "${Env}-lakehouse-${ComponentID}-lz-bucket"
+      BucketName: !Sub "${Env}-lakehouse-${ComponentID}-lz-bucket-${AWS::AccountId}-${Region}"
       BucketEncryption: 
         ServerSideEncryptionConfiguration: 
           - ServerSideEncryptionByDefault:
@@ -38,7 +55,7 @@ Resources:
   ProducerBucket:
     Type: AWS::S3::Bucket
     Properties: 
-      BucketName: !Sub "${Env}-lakehouse-${ComponentID}-producer-bucket"
+      BucketName: !Sub "${Env}-lakehouse-${ComponentID}-producer-bucket-${AWS::AccountId}-${Region}"
       BucketEncryption: 
         ServerSideEncryptionConfiguration: 
           - ServerSideEncryptionByDefault:
@@ -50,3 +67,15 @@ Outputs:
     Export:
       Name: !Sub "LZ:LzBucketArn"
     Description: "Landing Zone bucket ARN"
+
+  DeploymentBucketArn:
+    Value: !GetAtt DeploymentBucket.Arn
+    Export:
+      Name: !Sub "LZ:DeploymentBucketArn"
+    Description: "Lake House LZ deployment resources bucket ARN"
+
+  DeploymentBucketNames:
+    Value: !Ref DeploymentBucket
+    Export:
+      Name: !Sub "LZ:DeploymentBucketName"
+    Description: "Lake House LZ deployment resources bucket name"

@@ -6,6 +6,7 @@ Parameters:
     Description: This templates' component identifier string
     Type: String
     Default: lz-main
+
   Env:
     Description: The environment in which the account is being deployed.
     Type: String
@@ -14,12 +15,20 @@ Parameters:
       - dev
       - qa
       - prod
+  
+  Region:
+    Description: The region for the template to be deployed.
+    Type: String
+    Default: us-east-2
+    AllowedValues:
+      - us-east-2
+      - us-east-1
 
 Resources:
   ProducerWorkflow:
     Type: AWS::Glue::Workflow
     Properties:
-      Name: !Sub "${Env}-lakehouse-${ComponentID}-producer-workflow"
+      Name: !Sub "${Env}-lakehouse-${ComponentID}-producer-workflow-${AWS::AccountId}-${Region}"
       Description: "Workflow to orchestrate data ingestion into the S3 data lake."
 
 
@@ -69,7 +78,7 @@ Resources:
       ManagedPolicyArns:
         - 'arn:aws:iam::aws:policy/service-role/AWSGlueServiceRole'
       Policies:
-        - PolicyName: !Sub '${Env}-lakehouse-${ComponentID}-role-policy-1'
+        - PolicyName: !Sub '${Env}-lakehouse-${ComponentID}-role-policy-${AWS::AccountId}-${Region}'
           PolicyDocument:
             Version: "2012-10-17"
             Statement:
@@ -89,7 +98,7 @@ Resources:
   PostDataJobTrigger:
     Type: AWS::Glue::Trigger
     Properties:
-      Name: !Sub "${Env}-lakehouse-${ComponentID}-post-data-job-trigger"
+      Name: !Sub "${Env}-lakehouse-${ComponentID}-post-data-job-trigger-${AWS::AccountId}-${Region}"
       WorkflowName: !Ref ProducerWorkflow
       Type: "ON_DEMAND"
       Description: "Triggers the data producer workflow."
@@ -101,14 +110,14 @@ Resources:
   PostDataJob:
     Type: AWS::Glue::Job
     Properties:
-      Name: !Sub "${Env}-lakehouse-${ComponentID}-data-curate-job"
+      Name: !Sub "${Env}-lakehouse-${ComponentID}-data-producer-job-${AWS::AccountId}-${Region}"
       Description: "Curates cleaned data into the target data lake bucket."
       MaxRetries: 3
       Role: !Ref GlueJobRole
       Command:
         Name: glueetl
         PythonVersion: "3"
-        ScriptLocation: !Join ['', ["s3://", !ImportValue "LH:GlueJobScriptBucketName",  "/scripts_lz/post-data.py"]]
+        ScriptLocation: !Join ['', ["s3://", !ImportValue "LZ:DeploymentBucketName",  "/scripts_lz/post-data.py"]]
       GlueVersion: "1.0"
       ExecutionProperty:
         MaxConcurrentRuns: 2
@@ -126,7 +135,7 @@ Resources:
   ProducerDataJobTrigger:
     Type: AWS::Glue::Trigger
     Properties:
-      Name: !Sub "${Env}-lakehouse-${ComponentID}-producer-job-trigger"
+      Name: !Sub "${Env}-lakehouse-${ComponentID}-producer-job-trigger-${AWS::AccountId}-${Region}"
       WorkflowName: !Ref ProducerWorkflow
       Type: "CONDITIONAL"
       StartOnCreation: true
@@ -144,14 +153,14 @@ Resources:
   ProducerJob:
     Type: AWS::Glue::Job
     Properties:
-      Name: !Sub "${Env}-lakehouse-${ComponentID}-producer-job"
+      Name: !Sub "${Env}-lakehouse-${ComponentID}-producer-job-${AWS::AccountId}-${Region}"
       Description: "Producer into the lake house raw bucket."
       MaxRetries: 3
       Role: !Ref GlueJobRole
       Command:
         Name: glueetl
         PythonVersion: "3"
-        ScriptLocation: !Join ['', ["s3://", !ImportValue "LH:GlueJobScriptBucketName",  "/scripts_lz/produce-data.py"]]
+        ScriptLocation: !Join ['', ["s3://", !ImportValue "LZ:DeploymentBucketName",  "/scripts_lz/produce-data.py"]]
       GlueVersion: "1.0"
       ExecutionProperty:
         MaxConcurrentRuns: 2

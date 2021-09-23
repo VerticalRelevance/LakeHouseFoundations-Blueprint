@@ -116,5 +116,5 @@ Outputs:
   GlueJobScriptBucketName:
     Value: !Ref GlueJobScriptBucket
     Export:
-      Name: "LH:GlueJobScriptBucketName"
+      Name: !Sub "LH:GlueJobScriptBucketName"
     Description: "Lake House glue job resources bucket name."

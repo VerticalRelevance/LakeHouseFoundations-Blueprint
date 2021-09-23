@@ -69,6 +69,7 @@ aws iam list-policies-granting-service-access --arn arn:aws:iam::899456967600:us
 [Redshift/Lake House Architecture]: https://aws.amazon.com/redshift/lake-house-architecture/ 
 [Data Lake and Data Mesh Architectures]: https://aws.amazon.com/blogs/big-data/design-a-data-mesh-architecture-using-aws-lake-formation-and-aws-glue/
 [Databricks Definitive Lake House Concepts]: https://databricks.com/research/lakehouse-a-new-generation-of-open-platforms-that-unify-data-warehousing-and-advanced-analytics
+[Lake House Self-Service Analytics Power Point]: https://pages.awscloud.com/rs/112-TZM-766/images/EV_deploy-lake-house-architecture-to-enable-self-service-analytics-with-aws-lake-formation_Jul-2021.pdf
 
 ### Lakeformation Setup
 [Changing default Lakeformation Security Settings]: https://docs.aws.amazon.com/lake-formation/latest/dg/change-settings.html 

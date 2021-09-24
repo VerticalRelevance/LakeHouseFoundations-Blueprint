@@ -1,37 +1,6 @@
 AWSTemplateFormatVersion: 2010-09-09
 Description: AWSCloudFormationStackSetAdministrationRole to enable use of AWS CloudFormation StackSets.
 
-# Metadata:
-#   'AWS::CloudFormation::Interface':
-#     ParameterGroups:
-#       - Label:
-#           default: Database Configuration
-#         Parameters:
-#           - TPCDBName
-#           - DBMasterUser
-#           - DBMasterPassword
-#       - Label:
-#           default: User Configuration
-#         Parameters:
-#           - TestUserPassword
-#       - Label:
-#           default: Misc Configuration
-#         Parameters:
-#           - LatestAmiId
-#           - EC2KeyPair
-    # ParameterLabels:
-    #   TPCDBName:
-    #     default: Database Name
-    #   DBMasterUser:
-    #     default: Master Username
-    #   DBMasterPassword:
-    #     default: Master User Password
-    #   TestUserPassword:
-    #     default: Test User Password
-    #   EC2KeyPair:
-    #     default: EC2 Key Pair
-    #   LatestAmiId:
-    #     default: Latest AMI Id
 Mappings:
   SubnetConfig:
     VPC:
@@ -44,6 +13,21 @@ Mappings:
       CIDR: 10.0.12.0/24
 
 Parameters:
+  DeploymentRootName:
+    Description: Root name of project/component deployment
+    Type: String
+    Default: lakehouse
+  AccountShorthand:
+    Description: Abbreviated logical account identifier
+    Type: String
+    Default: lz
+  Region:
+    Description: The region for the template to be deployed.
+    Type: String
+    Default: us-east-2
+    AllowedValues:
+      - us-east-2
+      - us-east-1
   ComponentID:
     Description: This templates' component identifier string
     Type: String
@@ -58,7 +42,6 @@ Parameters:
       - prod
   TestUserPassword:
     Type: String
-    Default: Password1!
     Description: Password for all test users.
   
 Resources:

@@ -12,17 +12,12 @@ aws cloudformation deploy \
     --capabilities CAPABILITY_NAMED_IAM \
     --parameter-overrides "ComponentID=consumer-athena" "Env=dev"
 
-# aws cloudformation deploy \
-#     --stack-name "dev-lakehouse-consumer-catalog" \
-#     --template-file "../infra/cf-consumer-catalog.yml" \
-#     --parameter-overrides "ComponentID=consumer-catalog" "Env=dev" \
-#     --capabilities CAPABILITY_NAMED_IAM
-
-# aws cloudformation deploy \
-#     --stack-name "dev-lakehouse-consumer-lakeformation" \
-#     --template-file "../infra/cf-consumer-lakeformation.yml" \
-#     --capabilities CAPABILITY_NAMED_IAM \
-#     --parameter-overrides "ComponentID=consumer" "Env=dev"
+CompId="$AccountShorthand-cons1"
+aws cloudformation deploy \
+    --stack-name $LfStackName \
+    --template-file $LfStackPath \
+    --capabilities CAPABILITY_NAMED_IAM \
+    --parameter-overrides "ComponentID=$CompId" "Env=$Env" "Region=$Region" "TestUserPassword=$TestUserPassword"
 
 aws cloudformation deploy \
     --stack-name "dev-lakehouse-consumer-redshiftspectrum" \

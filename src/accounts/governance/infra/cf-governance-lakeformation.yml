@@ -16,7 +16,7 @@ Parameters:
   ComponentID:
     Description: This templates' component identifier string
     Type: String
-    Default: gov-lakeformation
+    Default: gov-lf
   Env:
     Description: The environment in which the account is being deployed.
     Type: String
@@ -27,25 +27,9 @@ Parameters:
       - prod
   TestUserPassword:
     Type: String
-    Default: Password1!
     Description: Password for all test users.
 
 Resources:
-  # LakeformationSecurityGroup:
-  #   Type: 'AWS::EC2::SecurityGroup'
-  #   Properties:
-  #     GroupDescription: Security Group for Lakeformation VPC
-  #     VpcId: !Ref LakeFormationVPC
-  #     Tags:
-  #       - Key: Name
-  #         Value: Lakeformation-SecGroup
-  # SelfIngress:
-  #   Type: 'AWS::EC2::SecurityGroupIngress'
-  #   DependsOn: RDSSecurityGroup
-  #   Properties:
-  #     GroupId: !Ref RDSSecurityGroup
-  #     IpProtocol: '-1'
-  #     SourceSecurityGroupId: !Ref RDSSecurityGroup
   LakeFormationVPC:
     Type: 'AWS::EC2::VPC'
     Properties:
@@ -188,32 +172,6 @@ Resources:
       ServiceName: !Sub 'com.amazonaws.${AWS::Region}.s3'
       VpcId: !Ref LakeFormationVPC
 
-  # TPCGlueConnector:
-  #   Type: 'AWS::Glue::Connection'
-  #   Properties:
-  #     CatalogId: !Ref 'AWS::AccountId'
-  #     ConnectionInput:
-  #       Name: TPCGlueConnector
-  #       ConnectionType: JDBC
-  #       PhysicalConnectionRequirements:
-  #         AvailabilityZone: !Select 
-  #           - 0
-  #           - !GetAZs 
-  #             Ref: 'AWS::Region'
-  #         SubnetId: !Ref PublicSubnetOne
-  #         SecurityGroupIdList:
-  #           - !Ref RDSSecurityGroup
-  #       ConnectionProperties:
-  #         JDBC_CONNECTION_URL: !Join 
-  #           - ''
-  #           - - 'jdbc:mysql://'
-  #             - !GetAtt 
-  #               - TPCDatabase
-  #               - Endpoint.Address
-  #             - ':3306/tpc'
-  #         USERNAME: !Ref DBMasterUser
-  #         PASSWORD: !Ref DBMasterPassword
-  #         JDBC_ENFORCE_SSL: 'false'
   GlueServiceRole:
     Type: 'AWS::IAM::Role'
     Properties:
@@ -304,18 +262,17 @@ Resources:
                   - "logs:*"
                   - "lakeformation:*"
                 Resource:
-                  - !Join [ '', ["arn:aws:s3:::*"]] # , !Sub "${Env}", "-lakehouse-*"]]
+                  - !Join [ '', ["arn:aws:s3:::*"]] 
                   - !Join [ '', ["arn:aws:glue:*:*:", "*"]]
                   - !Join [ '', ["arn:aws:lakeformation:*:*", "*"]]
                   - !Join [ '', ["arn:aws:logs:*:*:", "*"]]
       RoleName: !Sub "${Env}-lakehouse-${ComponentID}-glue-service-role"
-  
   GovGlueCrawler:
     Type: AWS::Glue::Crawler
     Properties:
       Name: !Sub '${Env}-lakehouse-${ComponentID}-datalake-crawler'
       Description: Crawler of desired data resource
-      Role: !Ref GlueServiceRole # GovGlueCatalogCrawlerRole
+      Role: !Ref GlueServiceRole 
       DatabaseName: !Sub '${Env}-lakehouse-${ComponentID}-datalake-catalog'
       Targets:
         S3Targets: 
@@ -323,15 +280,10 @@ Resources:
             Path: !Sub "${Env}-lakehouse-lh-s3-curated"
       Configuration: "{\"Version\":1.0,\"CrawlerOutput\":{\"Partitions\":{\"AddOrUpdateBehavior\":\"InheritFromTable\"},\"Tables\":{\"AddOrUpdateBehavior\":\"MergeNewColumns\"}}}"
 
-
-  # DataLakeBucket:
-  #   Type: 'AWS::S3::Bucket'
-  #   Properties:
-  #     BucketName: !Sub "${Env}-lakehouse-${ComponentID}-data-lake-bucket" 
-  LFWorkshopBucket:
+      LFWorkshopBucket:
     Type: 'AWS::S3::Bucket'
     Properties:
-      BucketName: !Sub "${Env}-lakehouse-${ComponentID}-lf-workshop-bucket"
+      BucketName: !Sub "${Env}-lakehouse-${ComponentID}-lf-bucket"
 
   AdminUser:
     Type: 'AWS::IAM::User'
@@ -403,13 +355,8 @@ Resources:
                   - 'athena:StartQueryExecution'
                   - 'athena:GetWorkGroup'
                   - 'athena:Get*'
-                  # - 'glue:*'
-                  # - 'lakeformation:*'
-                  # - 'redshift:*'
                 Resource:
                   - '*'
-                  # - !Join ['', ['arn:aws:s3:::', !Ref LFWorkshopBucket, '/athena-results/*']]
-                  # - 'arn:aws:athena:us-east-2:899456967600:*'
   CampaignManagerUser:
     Type: 'AWS::IAM::User'
     Properties:
@@ -445,11 +392,6 @@ Resources:
                   - 'cloudtrail:LookupEvents'
                 Resource:
                   - '*'
-                  # - !Join ['', ['arn:aws:s3:::', !Ref LFWorkshopBucket, '/athena-results/*']]
-                  # - !Sub 'arn:aws:iam::*:role/${Env}-lakehouse-${ComponentID}-glue-service-role'
-                  # - 'arn:aws:glue:us-east-2:899456967600:*' # Added because without, the associated persona could not perform glue:SearchTables
-                  # - 'arn:aws:lakeformation:us-east-2:899456967600:*' # Added because without, the associated persona could not perform glue:SearchTables
-                  # - 'arn:aws:athena:us-east-2:899456967600:*'
               - Effect: Allow
                 Action: 'iam:PassRole'
                 Resource:
@@ -482,12 +424,6 @@ Resources:
         - 'arn:aws:iam::aws:policy/AmazonAthenaFullAccess'
 
 Outputs:
-  # LFDataLakeBucketName:
-  #   Description: Lake Formation Data Lake Bucket Name
-  #   Value: !Ref DataLakeBucket
-  LFWorkshopBucketName:
-    Description: Lake Formation Workshop Bucket Name
-    Value: !Ref LFWorkshopBucket
   AthenaQueryResultLocation:
     Description: Athena Query Result Location
     Value: !Join 
@@ -516,9 +452,6 @@ Outputs:
       - - 's3://'
         - !Ref LFWorkshopBucket
         - /metadata
-  LFUsersPassword:
-    Description: Password for Data Lake Users
-    Value: !Ref TestUserPassword
   ConsoleIAMLoginUrl:
     Description: Console IAM Login URL to try out different users
     Value: !Join 

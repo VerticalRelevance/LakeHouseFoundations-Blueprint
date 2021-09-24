@@ -11,7 +11,7 @@ aws cloudformation deploy \
     --stack-name "dev-lakehouse-governance-lakeformation" \
     --template-file "../infra/cf-governance-lakeformation.yml" \
     --capabilities CAPABILITY_NAMED_IAM \
-    --parameter-overrides "ComponentID=gov-lakeformation" "Env=dev"
+    --parameter-overrides "ComponentID=gov-lf" "Env=dev"
 
 # aws cloudformation deploy \
 #     --stack-name "dev-lakehouse-governance-crawler" \

@@ -1,23 +1,23 @@
 #!/bin/bash
 
-# aws s3 sync ../ s3://lakehouse-deployment-resources-15362389/accounts/lakehouse/infra/* --delete --exclude "*" --include "*.yml"
-
-# Deploy
+# Set Variables
+. ../../scripts/set-variables.sh
 
 # S3 Buckets
+CompId="lh-s3"
 aws cloudformation deploy \
-    --stack-name "dev-lakehouse-lh-s3" \
+    --stack-name "dev-lakehouse-$CompId" \
     --template-file "../infra/cf-lakehouse-s3.yml" \
-    --capabilities CAPABILITY_NAMED_IAM \
-    --parameter-overrides "ComponentID=lh-s3" "Env=dev"
+    --parameter-overrides "ComponentID=$CompId" "Env=$Env" "Region=$Region" \
+    --capabilities CAPABILITY_NAMED_IAM
 
 # Glue Job Scripts to S3
-aws s3 sync "../scripts" "s3://dev-lakehouse-lh-s3-glue-resources/scripts_lh"
+aws s3 sync "../scripts"  $ResourceBucketURI
 
+CompId="lh-glue"
 aws cloudformation deploy \
-    --stack-name "dev-lakehouse-lh-glue" \
+    --stack-name "dev-lakehouse-$CompId" \
     --template-file "../infra/cf-lakehouse-glue.yml" \
-    --capabilities CAPABILITY_NAMED_IAM \
-    --parameter-overrides "ComponentID=lh-glue2" "Env=dev"
+    --parameter-overrides "ComponentID=$CompId"  "Env=$Env" "Region=$Region" \
+    --capabilities CAPABILITY_NAMED_IAM 
 
-# Run integration tests for deployment

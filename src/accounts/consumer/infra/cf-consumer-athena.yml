@@ -16,8 +16,6 @@ Parameters:
       - prod
 
 Resources:
-  
-  # Athena Role
 
   # Athena WorkGroup
   MyAthenaWorkGroup:

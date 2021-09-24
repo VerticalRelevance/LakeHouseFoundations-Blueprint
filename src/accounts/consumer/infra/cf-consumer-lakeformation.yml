@@ -74,6 +74,8 @@ Parameters:
     Type: String
     Default: Password1!
     Description: Password for all test users.
+  # #
+  # Below commented out to restrict outside access
   # # EC2KeyPair:
   # #   Description: Amazon EC2 Key Pair
   # #   Type: 'AWS::EC2::KeyPair::KeyName'
@@ -86,6 +88,8 @@ Parameters:
   #   Description: Image ID for the EC2 helper instance. DO NOT change this.
 
 Resources:
+  # #
+  # Below commented out to restrict outside access
   # RDSSecurityGroup:
   #   Type: 'AWS::EC2::SecurityGroup'
   #   Properties:
@@ -275,33 +279,6 @@ Resources:
       ServiceName: !Sub 'com.amazonaws.${AWS::Region}.s3'
       VpcId: !Ref LakeFormationVPC
 
-      
-  # TPCGlueConnector:
-  #   Type: 'AWS::Glue::Connection'
-  #   Properties:
-  #     CatalogId: !Ref 'AWS::AccountId'
-  #     ConnectionInput:
-  #       Name: TPCGlueConnector
-  #       ConnectionType: JDBC
-  #       PhysicalConnectionRequirements:
-  #         AvailabilityZone: !Select 
-  #           - 0
-  #           - !GetAZs 
-  #             Ref: 'AWS::Region'
-  #         SubnetId: !Ref PublicSubnetOne
-  #         SecurityGroupIdList:
-  #           - !Ref RDSSecurityGroup
-  #       ConnectionProperties:
-  #         JDBC_CONNECTION_URL: !Join 
-  #           - ''
-  #           - - 'jdbc:mysql://'
-  #             - !GetAtt 
-  #               - TPCDatabase
-  #               - Endpoint.Address
-  #             - ':3306/tpc'
-  #         USERNAME: !Ref DBMasterUser
-  #         PASSWORD: !Ref DBMasterPassword
-  #         JDBC_ENFORCE_SSL: 'false'
   GlueServiceRole:
     Type: 'AWS::IAM::Role'
     Properties:
@@ -389,7 +366,7 @@ Resources:
   LFWorkshopBucket:
     Type: 'AWS::S3::Bucket'
     Properties:
-      BucketName: !Sub "${Env}-lakehouse-${ComponentID}-lf-workshop-bucket"
+      BucketName: !Sub "${Env}-lakehouse-${ComponentID}-lf-bucket"
 
   AdminUser:
     Type: 'AWS::IAM::User'
@@ -502,7 +479,6 @@ Resources:
       ManagedPolicyArns:
         - 'arn:aws:iam::aws:policy/AmazonAthenaFullAccess'
       UserName: !Sub "${Env}-lakehouse-${ComponentID}-lf-campaign-manager-role"
-
   BusinessAnalystUser:
     Type: 'AWS::IAM::User'
     Properties:

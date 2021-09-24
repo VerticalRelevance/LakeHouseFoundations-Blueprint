@@ -38,13 +38,11 @@ Infrastructure definitions are grouped by each account's resources to be provisi
 ## Pipeline scripting files
 ## Infrastructure Templates
 - src/infra/lz/
-  - cf-lz-main.yml 
-  - cf-lz-datasync.yml
-  - cf-lz-msk.yml
+  - cf-lz-s3.yml
+  - cf-lz-glue.yml
 - src/infra/lakehouse/
   - cf-lakehouse-s3.yml
   - cf-lakehouse-glue.yml
-  - cf-lakehouse-redshift.yml
 - src/infra/governance/
   - cf-governance-.yml
 - src/infra/consumer/

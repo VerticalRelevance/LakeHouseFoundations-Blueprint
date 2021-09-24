@@ -12,13 +12,13 @@ This set of components represents the Lake House Reference architecture Landing 
 Follow the steps below to install the baseline infrastructure required to setup the landing zone account resource definitons.
 
 - Configure your AWS profile in the CLI with the target Landing Zone account.
-- Navigate to the lz/scripts folder and run the deploy.sh shell script.
+- Navigate to the ./scripts folder and run the deploy.sh shell script.
 
 ## Tear-Down
 Follow the steps below to install the baseline infrastructure required to delete the landing zone account resource definitions.
 
 - Configure your AWS profile in the CLI with the target Landing Zone account.
-- Navigate to the /src/account/lz/scripts folder and run the deploy.sh shell script.
+- Navigate to the ./scripts folder and run the destroy.sh shell script.
 
 # Usage
 

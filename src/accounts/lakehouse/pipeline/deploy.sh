@@ -1,27 +1,31 @@
 #!/bin/bash
 
-# Set Variables
-. ../../scripts/set-variables.sh "lh"
-S3StackPath="../infra/cf-$DeploymentRootName-s3.yml"
-GlueStackPath="../infra/cf-$DeploymentRootName-glue.yml"
+echo "Begin setting variables.."
+. ../../../scripts/set-variables.sh "lh"
+
+S3StackName="cf-$DeploymentRootName-$AccountShorthand-s3"
+S3StackPath="../infra/cf-$AccountShorthand-s3.yml"
+
+GlueStackName="cf-$DeploymentRootName-$AccountShorthand-glue"
+GlueStackPath="../infra/cf-$AccountShorthand-glue.yml"
+echo "End setting variables."
 
 echo "Deploying S3 stack.."
-CompId="lh-s3"
+CompId="$AccountShorthand-s3"
 aws cloudformation deploy \
-    --stack-name "$Env-$DeploymentRootName-$CompId" \
+    --stack-name $S3StackName \
     --template-file $S3StackPath \
-    --parameter-overrides "ComponentID=$CompId" "Env=$Env" "Region=$Region" \
+    --parameter-overrides "ComponentID=$CompId" "Env=$Env" "Region=$Region" "ResourceBucketName=$ResourceBucketName"\
     --capabilities CAPABILITY_NAMED_IAM
 
 echo "Syncing resource files to S3 resource bucket.."
-aws s3 sync "../scripts"  $ResourceBucketURI
+aws s3 sync "../scripts" "$ResourceBucketURI/$AccountShorthand-scripts"
 echo "Resource files synced to S3 resource bucket."
 
 echo "Deploying Glue stack.."
-CompId="lh-glue"
+CompId="$AccountShorthand-glue"
 aws cloudformation deploy \
-    --stack-name "$Env-$DeploymentRootName-$CompId" \
+    --stack-name $GlueStackName \
     --template-file $GlueStackPath \
     --parameter-overrides "ComponentID=$CompId"  "Env=$Env" "Region=$Region" \
     --capabilities CAPABILITY_NAMED_IAM
-

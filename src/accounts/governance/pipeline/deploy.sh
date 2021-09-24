@@ -1,22 +1,19 @@
 #!/bin/bash
 
 
-# aws s3 sync ../ s3://lakehouse-deployment-resources-15362389/accounts/consumer/infra/* \
-# --delete --exclude "*" \
-# --include "*.yml"
+TestUserPassword=$1
 
-# Deploy
+echo "Begin setting variables.."
+. ../../../scripts/set-variables.sh "gov"
 
+LfStackName="${Env}-$DeploymentRootName-$AccountShorthand-lf"
+LfStackPath="../infra/cf-$AccountShorthand-lakeformation.yml"
+echo "End setting variables."
+
+echo "Deploying Lake Formation stack.."
+CompId="$AccountShorthand-lf"
 aws cloudformation deploy \
-    --stack-name "dev-lakehouse-governance-lakeformation" \
-    --template-file "../infra/cf-governance-lakeformation.yml" \
+    --stack-name $LfStackName \
+    --template-file $LfStackPath \
     --capabilities CAPABILITY_NAMED_IAM \
-    --parameter-overrides "ComponentID=gov-lf" "Env=dev"
-
-# aws cloudformation deploy \
-#     --stack-name "dev-lakehouse-governance-crawler" \
-#     --template-file "../infra/cf-governance-crawler.yml" \
-#     --capabilities CAPABILITY_NAMED_IAM \
-#     --parameter-overrides "ComponentID=gov-crawler" "Env=dev"
-
-# Run integration tests for deployment
+    --parameter-overrides "ComponentID=$CompId" "Env=$Env" "Region=$Region" "TestUserPassword=$TestUserPassword"

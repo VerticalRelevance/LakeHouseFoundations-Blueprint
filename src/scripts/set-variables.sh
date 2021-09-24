@@ -12,4 +12,4 @@ export ResourceBucketName="$Env-$DeploymentRootName-$AccountShorthand-s3-resourc
 export ResourceBucketURI="s3://$ResourceBucketName"
 
 echo "Env: $Env, Region: $Region, AccountId: $AccountId, ResourceBucketName: $ResourceBucketName, ResourceBucketURI: $ResourceBucketURI"
-# printenv
+# printenv  

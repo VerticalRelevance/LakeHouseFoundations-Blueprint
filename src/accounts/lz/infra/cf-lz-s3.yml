@@ -10,6 +10,13 @@ Parameters:
     Description: Abbreviated logical account identifier
     Type: String
     Default: lz
+  Region:
+    Description: The region for the template to be deployed.
+    Type: String
+    Default: us-east-2
+    AllowedValues:
+      - us-east-2
+      - us-east-1
   ComponentID:
     Description: This templates' component identifier string
     Type: String
@@ -22,13 +29,6 @@ Parameters:
       - dev
       - qa
       - prod
-  Region:
-    Description: The region for the template to be deployed.
-    Type: String
-    Default: us-east-2
-    AllowedValues:
-      - us-east-2
-      - us-east-1
   ResourceBucketName:
     Description: The name of the deployment resource bucket.
     Type: String

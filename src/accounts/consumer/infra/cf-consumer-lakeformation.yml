@@ -56,87 +56,12 @@ Parameters:
       - dev
       - qa
       - prod
-  # TPCDBName:
-  #   Type: String
-  #   Default: tpc
-  #   AllowedValues:
-  #     - tpc
-  #   Description: Name of the database that will be created.
-  # DBMasterUser:
-  #   Type: String
-  #   Default: tpcadmin
-  #   Description: Master username for TPC database.
-  # DBMasterPassword:
-  #   Type: String
-  #   Default: BigData26!
-  #   Description: Master password for TPC database.
   TestUserPassword:
     Type: String
     Default: Password1!
     Description: Password for all test users.
-  # #
-  # Below commented out to restrict outside access
-  # # EC2KeyPair:
-  # #   Description: Amazon EC2 Key Pair
-  # #   Type: 'AWS::EC2::KeyPair::KeyName'
-  # #   MinLength: 1
-  # LatestAmiId:
-  #   Type: 'AWS::SSM::Parameter::Value<AWS::EC2::Image::Id>'
-  #   Default: /aws/service/ami-amazon-linux-latest/amzn2-ami-hvm-x86_64-gp2
-  #   AllowedValues:
-  #     - /aws/service/ami-amazon-linux-latest/amzn2-ami-hvm-x86_64-gp2
-  #   Description: Image ID for the EC2 helper instance. DO NOT change this.
-
+  
 Resources:
-  # #
-  # Below commented out to restrict outside access
-  # RDSSecurityGroup:
-  #   Type: 'AWS::EC2::SecurityGroup'
-  #   Properties:
-  #     GroupDescription: Security Group for RDS
-  #     VpcId: !Ref LakeFormationVPC
-  #     Tags:
-  #       - Key: Name
-  #         Value: LF-Workshop-RDS-SecGroup
-  # SelfIngress:
-  #   Type: 'AWS::EC2::SecurityGroupIngress'
-  #   DependsOn: RDSSecurityGroup
-  #   Properties:
-  #     GroupId: !Ref RDSSecurityGroup
-  #     IpProtocol: '-1'
-  #     SourceSecurityGroupId: !Ref RDSSecurityGroup
-  # RDSSubnetGroup:
-  #   Type: 'AWS::RDS::DBSubnetGroup'
-  #   Properties:
-  #     DBSubnetGroupDescription: RDS Subnet Group using subnets from 2 AZs
-  #     SubnetIds:
-  #       - !Ref PublicSubnetOne
-  #       - !Ref PublicSubnetTwo
-  #     Tags:
-  #       - Key: Name
-  #         Value: LF-Workshop-RDS-SubnetGroup
-  # TPCDatabase:
-  #   Type: 'AWS::RDS::DBInstance'
-  #   DependsOn:
-  #     - RDSSubnetGroup
-  #     - RDSSecurityGroup
-  #   DeletionPolicy: Delete
-  #   Properties:
-  #     DBInstanceClass: db.r5.large
-  #     DBInstanceIdentifier: tpc-database
-  #     DBName: !Ref TPCDBName
-  #     AllocatedStorage: '100'
-  #     DBSubnetGroupName: !Ref RDSSubnetGroup
-  #     Engine: MySQL
-  #     EngineVersion: 5.7.22
-  #     MasterUsername: !Ref DBMasterUser
-  #     MasterUserPassword: !Ref DBMasterPassword
-  #     BackupRetentionPeriod: '0'
-  #     StorageType: gp2
-  #     AllowMajorVersionUpgrade: false
-  #     VPCSecurityGroups:
-  #       - !Ref RDSSecurityGroup
-  #     PubliclyAccessible: true
   LakeFormationVPC:
     Type: 'AWS::EC2::VPC'
     Properties:

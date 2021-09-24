@@ -33,31 +33,11 @@ Each of the infrastructure templates in this repository currently contain the fo
 1) ComponentID - The identifier of any template in this repository which represents a logical set of deployment resources. This ComponentID will then be used to define the name of the resource definitions in the template, based on the naming convention for resources documented in the previous section.
 2) Environment - The environment the template targets.
 
-## Folder Structure & File Descriptions
-Infrastructure definitions are grouped by each account's resources to be provisioned.
-## Pipeline scripting files
-## Infrastructure Templates
-- src/infra/lz/
-  - cf-lz-s3.yml
-  - cf-lz-glue.yml
-- src/infra/lakehouse/
-  - cf-lakehouse-s3.yml
-  - cf-lakehouse-glue.yml
-- src/infra/governance/
-  - cf-governance-.yml
-- src/infra/consumer/
-  - cf-consumer-catalog.yml
-  - cf-consumer-athena.yml
-  - cf-consumer-redshift.yml
-  - cf-consumer-lakeformation.yml
-
-# Permissioning
-In order to list the permissions granted to any user in Lake Formation, use the following CLI command:
-
-aws iam list-policies-granting-service-access --arn arn:aws:iam::899456967600:user/dev-lakehouse-gov-lakeformation-lf-campaign-manager --service-namespaces glue
-
-aws iam list-policies-granting-service-access --arn arn:aws:iam::899456967600:user/dev-lakehouse-gov-lakeformation-lf-developer --service-namespaces glue
-
+## Account Folder Structure
+See the following README.md doc links for futher details regarding specific account deployment/configuration details:
+- [Landing Zone Account Docs][]
+- [Lake House Account Docs][]
+- [Governance Account Docs][]
 
 # Reference
 
@@ -92,6 +72,11 @@ aws iam list-policies-granting-service-access --arn arn:aws:iam::899456967600:us
 
 ### Misc
 [DataBrew Blog with Example CF Stack]: https://aws.amazon.com/blogs/big-data/preparing-data-for-ml-models-using-aws-glue-databrew-in-a-jupyter-notebook/
+
+## Extended Documentation Links
+[Landing Zone Account Docs]: src/accounts/governance/README.md
+[Lake House Account Docs]: src/accounts/lakehouse/README.md
+[Governance Account Docs]: src/accounts/lz/README.md
 
 ## Images
 [TARGET ARCH DIAGRAM]: ./resources/images/lakehouse-ref-arch-1.png "Reference Architecture Diagram"

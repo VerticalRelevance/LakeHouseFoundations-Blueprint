@@ -1,28 +1,42 @@
 #!/bin/bash
 
+TestUserPassword=$1
 
-# aws s3 sync ../ s3://lakehouse-deployment-resources-15362389/accounts/consumer/infra/* \
-# --delete --exclude "*" \
-# --include "*.yml"
+echo "Begin setting variables.."
+. ../../../scripts/set-variables.sh "cons"
 
-# Deploy
-aws cloudformation deploy \
-    --stack-name "dev-lakehouse-consumer-athena" \
-    --template-file "../infra/cf-consumer-athena.yml" \
-    --capabilities CAPABILITY_NAMED_IAM \
-    --parameter-overrides "ComponentID=consumer-athena" "Env=dev"
+LfStackName="${Env}-$DeploymentRootName-$AccountShorthand-lakeformation"
+LfStackPath="../infra/cf-$AccountShorthand-lakeformation.yml"
 
-CompId="$AccountShorthand-cons1"
+AthenaStackName="${Env}-$DeploymentRootName-$AccountShorthand-athena"
+AthenaStackPath="../infra/cf-$AccountShorthand-athena.yml"
+
+SpectrumStackName="${Env}-$DeploymentRootName-$AccountShorthand-redshift-spectrum"
+SpectrumStackPath="../infra/cf-$AccountShorthand-redshift-spectrum.yml"
+
+echo "End setting variables."
+
+CompId="$AccountShorthand-lf"
 aws cloudformation deploy \
     --stack-name $LfStackName \
     --template-file $LfStackPath \
     --capabilities CAPABILITY_NAMED_IAM \
     --parameter-overrides "ComponentID=$CompId" "Env=$Env" "Region=$Region" "TestUserPassword=$TestUserPassword"
 
+CompId="$AccountShorthand-athena"
 aws cloudformation deploy \
-    --stack-name "dev-lakehouse-consumer-redshiftspectrum" \
-    --template-file "../infra/cf-consumer-redshift-spectrum.yml" \
-    --parameter-overrides "ComponentID=consumer-catalog" "Env=dev" \
-    --capabilities CAPABILITY_NAMED_IAM
+    --stack-name $AthenaStackName \
+    --template-file $AthenaStackPath \
+    --capabilities CAPABILITY_NAMED_IAM \
+    --parameter-overrides "ComponentID=$CompId" "Env=$Env"
+
+CompId="$AccountShorthand-spectrum"
+aws cloudformation deploy \
+    --stack-name $SpectrumStackName \
+    --template-file $SpectrumStackPath \
+    --capabilities CAPABILITY_NAMED_IAM \
+    --parameter-overrides "ComponentID=$CompId" "Env=$Env" \
+        "pAvailabilityZone=us-east-1a" \
+        "pBastionHostEC2KeyPair=dev-lakehouse-cons1-redshift-bastion-keypair"
 
 # Run integration tests for deployment

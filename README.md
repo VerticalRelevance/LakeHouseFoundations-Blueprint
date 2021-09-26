@@ -30,14 +30,41 @@ Where:
 
 ## Universal Template Parameters
 Each of the infrastructure templates in this repository currently contain the following parameters:
-1) ComponentID - The identifier of any template in this repository which represents a logical set of deployment resources. This ComponentID will then be used to define the name of the resource definitions in the template, based on the naming convention for resources documented in the previous section.
-2) Environment - The environment the template targets.
+
+  DeploymentRootName:
+    Description: Root name of project/component deployment
+    Type: String
+    Default: lakehouse
+  AccountShorthand:
+    Description: Abbreviated logical account identifier
+    Type: String
+    Default: lz
+  Region:
+    Description: The region for the template to be deployed.
+    Type: String
+    Default: us-east-2
+    AllowedValues:
+      - us-east-2
+      - us-east-1
+  ComponentID:
+    Description: This templates' component identifier string
+    Type: String
+    Default: gov-lf
+  Env:
+    Description: The environment in which the account is being deployed.
+    Type: String
+    Default: dev
+    AllowedValues:
+      - dev
+      - qa
+      - prod
 
 ## Account Folder Structure
 See the following README.md doc links for futher details regarding specific account deployment/configuration details:
 - [Landing Zone Account Docs][]
 - [Lake House Account Docs][]
 - [Governance Account Docs][]
+- [Example Consumer Account Docs][]
 
 # Reference
 
@@ -77,6 +104,7 @@ See the following README.md doc links for futher details regarding specific acco
 [Landing Zone Account Docs]: src/accounts/governance/README.md
 [Lake House Account Docs]: src/accounts/lakehouse/README.md
 [Governance Account Docs]: src/accounts/lz/README.md
+[Example Consumer Account Docs]: src/accounts/consumer/README.md
 
 ## Images
 [TARGET ARCH DIAGRAM]: ./resources/images/lakehouse-ref-arch-1.png "Reference Architecture Diagram"

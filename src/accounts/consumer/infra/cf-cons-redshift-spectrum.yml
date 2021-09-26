@@ -71,10 +71,25 @@ Metadata:
       pMasterUserPassword:
         default: DB User Password
 Parameters:
+  DeploymentRootName:
+    Description: Root name of project/component deployment
+    Type: String
+    Default: lakehouse
+  AccountShorthand:
+    Description: Abbreviated logical account identifier
+    Type: String
+    Default: lz
+  Region:
+    Description: The region for the template to be deployed.
+    Type: String
+    Default: us-east-2
+    AllowedValues:
+      - us-east-2
+      - us-east-1
   ComponentID:
     Description: This templates' component identifier string
     Type: String
-    Default: consumer-redshift
+    Default: cons-lf
   Env:
     Description: The environment in which the account is being deployed.
     Type: String
@@ -105,7 +120,6 @@ Parameters:
       Name of an existing EC2 key pair, which you will use to log into the
       Bastion host
     Type: String
-    Default: 'dev-lakehouse-consumer-redshift-test-keypair ' # Testing default keypair, to be removed later
     MinLength: 1
   pPoCVPCName:
     Description: VPC Name

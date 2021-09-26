@@ -43,6 +43,7 @@ Parameters:
   TestUserPassword:
     Type: String
     Description: Password for all test users.
+    NoEcho: true
 
 Resources:
   LakeFormationVPC:
@@ -355,100 +356,6 @@ Resources:
       ManagedPolicyArns:
         - 'arn:aws:iam::aws:policy/AWSLakeFormationCrossAccountManager'
         - 'arn:aws:iam::aws:policy/AmazonEC2ReadOnlyAccess'
-  
-  DeveloperUser:
-    Type: 'AWS::IAM::User'
-    Properties:
-      UserName: !Sub "${Env}-lakehouse-${ComponentID}-lf-hr-developer"
-      Path: /
-      LoginProfile:
-        Password: !Ref TestUserPassword
-        PasswordResetRequired: false
-      Tags:
-        - Key: hr-developer
-          Value: hr-developer
-        - Key: hr-group
-          Value: hr-developer
-      Policies:
-        - PolicyName: LF-Athena-Query-Result-Policy
-          PolicyDocument:
-            Version: 2012-10-17
-            Statement:
-              - Effect: Allow
-                Action:
-                  - 's3:*'
-                  - 'glue:*'
-                  - 'lakeformation:*'
-                  - 'athena:StartQueryExecution'
-                  - 'athena:GetWorkGroup'
-                  - 'athena:Get*'
-                Resource:
-                  - '*'
-  CampaignManagerUser:
-    Type: 'AWS::IAM::User'
-    Properties:
-      UserName: !Sub "${Env}-lakehouse-${ComponentID}-lf-hr-manager"
-      Path: /
-      LoginProfile:
-        Password: !Ref TestUserPassword
-        PasswordResetRequired: false
-      Tags:
-        - Key: hr-group
-          Value: hr-manager
-      Policies:
-        - PolicyName: LF-Athena-Query-Result-Policy
-          PolicyDocument:
-            Version: 2012-10-17
-            Statement:
-              - Effect: Allow
-                Action:
-                  - 's3:*'
-                  - 'glue:*'
-                  - 'athena:StartQueryExecution'
-                  - 'athena:GetWorkGroup'
-                  - 'athena:Get*'
-                  - 'lakeformation:*'
-                  - 'redshift:*'
-                  - 'redshift-data:ExecuteStatement'
-                  - 'iam:ListUsers' # Have to provide iam actions for grants (data mesh functionality)
-                  - 'iam:ListRoles'
-                  - 'iam:GetRole'
-                  - 'iam:GetRolePolicy'
-                  - 'tag:Get*'
-                  - 'cloudtrail:DescribeTrails'
-                  - 'cloudtrail:LookupEvents'
-                Resource:
-                  - '*'
-              - Effect: Allow
-                Action: 'iam:PassRole'
-                Resource:
-                  - '*'
-  BusinessAnalystUser:
-    Type: 'AWS::IAM::User'
-    Properties:
-      UserName: !Sub "${Env}-lakehouse-${ComponentID}-lf-business-analyst"
-      Path: /
-      LoginProfile:
-        Password: !Ref TestUserPassword
-        PasswordResetRequired: false
-      Policies:
-        - PolicyName: LF-Athena-Query-Result-Policy
-          PolicyDocument:
-            Version: 2012-10-17
-            Statement:
-              - Effect: Allow
-                Action:
-                  - 's3:Put*'
-                  - 's3:Get*'
-                  - 's3:List*'
-                Resource:
-                  - !Join 
-                    - ''
-                    - - 'arn:aws:s3:::'
-                      - !Ref LfBucket
-                      - /athena-results/*
-      ManagedPolicyArns:
-        - 'arn:aws:iam::aws:policy/AmazonAthenaFullAccess'
 
 Outputs:
   ConsoleIAMLoginUrl:

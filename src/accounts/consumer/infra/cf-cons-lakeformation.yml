@@ -20,7 +20,7 @@ Parameters:
   AccountShorthand:
     Description: Abbreviated logical account identifier
     Type: String
-    Default: lz
+    Default: cons
   Region:
     Description: The region for the template to be deployed.
     Type: String
@@ -31,7 +31,7 @@ Parameters:
   ComponentID:
     Description: This templates' component identifier string
     Type: String
-    Default: consumer-lakeformation
+    Default: cons-lf
   Env:
     Description: The environment in which the account is being deployed.
     Type: String
@@ -43,6 +43,7 @@ Parameters:
   TestUserPassword:
     Type: String
     Description: Password for all test users.
+    NoEcho: true
   
 Resources:
   LakeFormationVPC:
@@ -279,6 +280,7 @@ Resources:
   AdminUser:
     Type: 'AWS::IAM::User'
     Properties:
+      UserName: !Sub '${Env}-${DeploymentRootName}-${ComponentID}-lf-admin-${AWS::AccountId}-${Region}'
       Path: /
       LoginProfile:
         Password: !Ref TestUserPassword
@@ -333,10 +335,10 @@ Resources:
       ManagedPolicyArns:
         - 'arn:aws:iam::aws:policy/AWSLakeFormationCrossAccountManager'
         - 'arn:aws:iam::aws:policy/AmazonEC2ReadOnlyAccess'
-      UserName: !Sub "${Env}-lakehouse-${ComponentID}-lf-admin"
   DeveloperUser:
     Type: 'AWS::IAM::User'
     Properties:
+      UserName: !Sub '${Env}-${DeploymentRootName}-${ComponentID}-lf-developer-${AWS::AccountId}-${Region}'
       Path: /
       LoginProfile:
         Password: !Ref TestUserPassword
@@ -359,16 +361,16 @@ Resources:
                       - /athena-results/*
       ManagedPolicyArns:
         - 'arn:aws:iam::aws:policy/AmazonAthenaFullAccess'
-      UserName: !Sub "${Env}-lakehouse-${ComponentID}-lf-developer"
   CampaignManagerUser:
     Type: 'AWS::IAM::User'
     Properties:
+      UserName: !Sub '${Env}-${DeploymentRootName}-${ComponentID}-hr-manager-${AWS::AccountId}-${Region}'
       Path: /
       LoginProfile:
         Password: !Ref TestUserPassword 
         PasswordResetRequired: false
       Policies:
-        - PolicyName: !Sub "${Env}-lakehouse-${ComponentID}-lf-campaign-manager-role-policy"
+        - PolicyName: !Sub '${Env}-${DeploymentRootName}-${ComponentID}-hr-manager-policy-${AWS::AccountId}-${Region}'
           PolicyDocument:
             Version: 2012-10-17
             Statement:
@@ -386,7 +388,6 @@ Resources:
                       - /athena-results/*
       ManagedPolicyArns:
         - 'arn:aws:iam::aws:policy/AmazonAthenaFullAccess'
-      UserName: !Sub "${Env}-lakehouse-${ComponentID}-lf-campaign-manager-role"
   BusinessAnalystUser:
     Type: 'AWS::IAM::User'
     Properties:
@@ -413,155 +414,25 @@ Resources:
       ManagedPolicyArns:
         - 'arn:aws:iam::aws:policy/AmazonAthenaFullAccess'
       UserName: !Sub "${Env}-lakehouse-${ComponentID}-lf-business-analyst"
+
+  LoggingBucket:  
+    Type: 'AWS::S3::Bucket'
+    Properties:
+      BucketName: !Sub '${Env}-${DeploymentRootName}-${ComponentID}-logs-${AWS::AccountId}-${Region}'
+      AccessControl: LogDeliveryWrite
+
+  LfBucket:
+    Type: 'AWS::S3::Bucket'
+    Properties:
+      BucketName: !Sub '${Env}-${DeploymentRootName}-${ComponentID}-lf-bucket-${AWS::AccountId}-${Region}'
+      LoggingConfiguration:
+        DestinationBucketName: !Ref LoggingBucket
+        LogFilePrefix: lf-bucket/
+      BucketEncryption: 
+        ServerSideEncryptionConfiguration: 
+          - ServerSideEncryptionByDefault:
+              SSEAlgorithm: AES256
   
-  # EC2Role:
-  #   Type: 'AWS::IAM::Role'
-  #   Properties:
-  #     Path: /
-  #     RoleName: EC2Role
-  #     AssumeRolePolicyDocument:
-  #       Version: 2012-10-17
-  #       Statement:
-  #         - Effect: Allow
-  #           Principal:
-  #             Service:
-  #               - ec2.amazonaws.com
-  #           Action: 'sts:AssumeRole'
-  #     ManagedPolicyArns:
-  #       - 'arn:aws:iam::aws:policy/AdministratorAccess'
-  # EC2InstanceProfile:
-  #   Type: 'AWS::IAM::InstanceProfile'
-  #   Properties:
-  #     Path: /
-  #     Roles:
-  #       - !Ref EC2Role
-  # BackUpRestoreInstance:
-  #   Type: 'AWS::EC2::Instance'
-  #   Properties:
-  #     InstanceType: t2.small
-  #     ImageId: !Ref LatestAmiId
-  #     KeyName: !Ref EC2KeyPair
-  #     IamInstanceProfile: !Ref EC2InstanceProfile
-  #     NetworkInterfaces:
-  #       - AssociatePublicIpAddress: 'true'
-  #         DeviceIndex: '0'
-  #         GroupSet:
-  #           - !Ref RDSSecurityGroup
-  #         SubnetId: !Ref PublicSubnetOne
-  #     UserData: !Base64 
-  #       'Fn::Join':
-  #         - ''
-  #         - - |
-  #             #!/bin/bash -ex
-  #           - |
-  #             sudo yum -y install mysql
-  #           - >
-  #             aws s3 cp
-  #             s3://aws-data-analytics-workshops/lake-formation-workshop/sampledata/tripdata.csv
-  #             /tmp/
-  #           - 'aws s3 cp /tmp/tripdata.csv s3://'
-  #           - !Ref LFWorkshopBucket
-  #           - |
-  #             /glue/nyctaxi/
-  #           - >
-  #             aws s3 cp
-  #             s3://aws-data-analytics-workshops/lake-formation-workshop/scripts/nyctaxi-csv-to-json.py
-  #             /tmp/
-  #           - 'aws s3 cp /tmp/nyctaxi-csv-to-json.py s3://'
-  #           - !Ref LFWorkshopBucket
-  #           - |
-  #             /glue/scripts/
-  #           - >
-  #             aws s3 cp
-  #             s3://aws-data-analytics-workshops/lake-formation-workshop/notebooks/
-  #             /tmp/notebooks/ --recursive
-  #           - 'aws s3 cp /tmp/notebooks/ s3://'
-  #           - !Ref LFWorkshopBucket
-  #           - |
-  #             /notebooks/ --recursive
-  #           - >
-  #             aws s3 cp
-  #             s3://aws-data-analytics-workshops/lake-formation-workshop/sampledata/tpc.backup
-  #             /tmp/
-  #           - 'gunzip < /tmp/tpc.backup | mysql -h '
-  #           - !GetAtt 
-  #             - TPCDatabase
-  #             - Endpoint.Address
-  #           - ' -u '
-  #           - !Ref DBMasterUser
-  #           - ' -p'''
-  #           - !Ref DBMasterPassword
-  #           - ''' '
-  #           - !Ref TPCDBName
-  #           - |+
-
-  #     Tags:
-  #       - Key: Name
-  #         Value: EC2-DB-Loader
-  #   DependsOn:
-  #     - TPCDatabase
-  # AthenaDeveloperNamedQuery:
-  #   Type: 'AWS::Athena::NamedQuery'
-  #   Properties:
-  #     Database: !Ref TPCDBName
-  #     Description: A developer query on web page and web sales data.
-  #     Name: LF-Developer-Query
-  #     QueryString: >
-  #       /*
-  #        * Developer can only see web_page & web_sales tables
-  #        */
-  #       SELECT sum(ws_net_paid_inc_tax) NetPaid,
-  #               ws_web_site_sk WebSiteID
-  #       FROM dl_tpc_web_sales ws, dl_tpc_web_page wp WHERE ws.ws_web_site_sk =
-  #       wp.wp_web_page_sk GROUP BY  ws_web_site_sk;
-
-
-  #       /*
-  #        Check out the web_sales table
-  #       */ SELECT COUNT(*) FROM dl_tpc_web_sales;
-
-
-  #       /* Verify that a developer cannot access any other table. This should
-  #       give a Insufficient Privileges message */ SELECT * FROM dl_tpc_item
-  #       limit 10;
-  # AthenaBusinessAnalystNamedQuery:
-  #   Type: 'AWS::Athena::NamedQuery'
-  #   Properties:
-  #     Database: !Ref TPCDBName
-  #     Description: Sample query issued by Business Analyst.
-  #     Name: LF-BusinessAnalyst-Query
-  #     QueryString: |
-  #       /*
-  #          Verify that business-analyst can access the all the non-PII columns in customer table
-  #          */
-  #         SELECT *
-  #         FROM dl_tpc_customer limit 10;
-
-  #         /*
-  #          Verify that a business-analyst cannot access PII data
-  #         */
-  #         SELECT c_first_name, c_last_name, c_customer_sk, c_current_addr_sk
-  #         FROM dl_tpc_customer;
-  # AthenaCampaignManagerNamedQuery:
-  #   Type: 'AWS::Athena::NamedQuery'
-  #   Properties:
-  #     Database: !Ref TPCDBName
-  #     Description: Sample query issued by Campaign Manager.
-  #     Name: LF-CampaignManager-Query
-  #     QueryString: >
-  #       /*
-  #        * Sample Query from a Campaign Manager who is interested in marketing analytics
-  #        */
-
-  #       SELECT count(distinct i.i_item_sk) NumItems, p.p_promo_id PromotionId
-  #       FROM dl_tpc_item i, dl_tpc_promotion p, dl_tpc_web_sales ws WHERE
-  #       i.i_item_sk = ws_item_sk AND ws.ws_promo_sk = p.p_promo_sk GROUP BY
-  #       p.p_promo_id;
-
-  #       /*
-  #        * Make sure Campaign manager cannot access web_page table
-  #        */
-  #       SELECT count(*) FROM dl_tpc_web_page;
 Outputs:
   LFDataLakeBucketName:
     Description: Lake Formation Data Lake Bucket Name

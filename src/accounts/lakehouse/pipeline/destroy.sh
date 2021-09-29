@@ -16,13 +16,12 @@ aws cloudformation delete-stack --stack-name $GlueStackName --output json
 aws cloudformation wait stack-delete-complete --stack-name $GlueStackName --output json --no-paginate 
 echo "Glue stack deleted."
 
-
 # Delete bucket objects (Curlys catch any error)
 CompId="$AccountShorthand-s3"
 {
     echo "Deleting S3 logging bucket objects.."
     aws s3 rm "s3://$Env-$DeploymentRootName-$CompId-logs-$AccountId-$Region" --recursive
-    aws s3 rm "s3://$Env-$DeploymentRootName-$CompId-glue-tmp-$AccountId-$Region" --recursive
+    aws s3 rm "s3://$Env-$DeploymentRootName-$CompId-tmp-$AccountId-$Region" --recursive
     aws s3 rm $ResourceBucketURI --recursive
 
     aws s3 rm "s3://$Env-$DeploymentRootName-$CompId-raw-$AccountId-$Region" --recursive

@@ -45,7 +45,7 @@ Resources:
       BucketName: !Sub '${Env}-${DeploymentRootName}-${ComponentID}-glue-tmp-${AWS::AccountId}-${Region}'
       LoggingConfiguration:
         DestinationBucketName: !Ref LoggingBucket
-        LogFilePrefix: glue-temp/
+        LogFilePrefix: glue-tmp/
       BucketEncryption: 
         ServerSideEncryptionConfiguration: 
           - ServerSideEncryptionByDefault:

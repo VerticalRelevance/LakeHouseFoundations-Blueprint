@@ -9,7 +9,7 @@ echo "End setting variables."
 
 echo "Deleting Lake Formation stack.."
 CompId="$AccountShorthand-lf"
-# Delete bucket objects (Curlys catch any error)
+# Delete bucket objects. {<Curlys catch any error>} || { echo "Error...not gonna kill your script"}
 {
     aws s3 rm "s3://$Env-$DeploymentRootName-$CompId-logs-$AccountId-$Region" --recursive
     aws s3 rm "s3://$Env-$DeploymentRootName-$CompId-lf-bucket-$AccountId-$Region" --recursive

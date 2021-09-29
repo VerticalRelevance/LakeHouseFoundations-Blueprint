@@ -106,7 +106,6 @@ Resources:
         "--TempDir": !Join ['', ['s3://', !ImportValue "LH:GlueTempBucketName", '/clean']]
         "--source_bucket_uri": !Join ['', ['s3://', !ImportValue "LH:RawZoneBucketName"]]
         "--target_bucket_uri": !Join ['', ['s3://', !ImportValue "LH:TransformedZoneBucketName"]]
-
   TransformedToCuratedJobTrigger:
     Type: AWS::Glue::Trigger
     Properties:

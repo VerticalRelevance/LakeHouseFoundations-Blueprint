@@ -18,7 +18,6 @@ AthenaStackPath="../infra/cf-$AccountShorthand-athena.yml"
 
 SpectrumStackName="${Env}-$DeploymentRootName-$AccountShorthand-redshift-spectrum"
 SpectrumStackPath="../infra/cf-$AccountShorthand-redshift-spectrum.yml"
-
 echo "End setting variables."
 
 CompId="$AccountShorthand-lf"

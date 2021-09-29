@@ -13,7 +13,7 @@ Parameters:
   ComponentID:
     Description: This templates' component identifier string
     Type: String
-    Default: lh-glue
+    Default: lh-s3
   Env:
     Description: The environment in which the account is being deployed.
     Type: String
@@ -68,10 +68,40 @@ Resources:
       LoggingConfiguration:
         DestinationBucketName: !Ref LoggingBucket
         LogFilePrefix: raw-zone-bucket/
+      OwnershipControls:
+        Rules:
+          - ObjectOwnership: BucketOwnerPreferred
       BucketEncryption: 
         ServerSideEncryptionConfiguration: 
           - ServerSideEncryptionByDefault:
               SSEAlgorithm: AES256
+  RawZoneBucketPolicy: # Allows access for Glue Job in LZ
+    Type: AWS::S3::BucketPolicy
+    Properties:
+      Bucket: !Ref RawZoneBucket
+      PolicyDocument:
+        Version: 2012-10-17
+        Statement:
+          - Action:
+              - 's3:GetObject'
+              - 's3:PutObject'
+              - 's3:List*'
+            Effect: Allow
+            Resource: 
+              - !Join ['', ['arn:aws:s3:::', !Ref RawZoneBucket, '/*']]
+            Principal:
+              AWS:
+                - "arn:aws:iam::396791034774:root"
+          - Action:
+              - 's3:*'
+            Effect: Allow
+            Resource: 
+              - !Join ['', ['arn:aws:s3:::', !Ref RawZoneBucket, '/*']]
+            Principal:
+              Service:
+                - glue.amazonaws.com
+                - lakeformation.amazonaws.com
+
   TransformedZoneBucket:
     Type: AWS::S3::Bucket
     Properties: 
@@ -97,6 +127,11 @@ Resources:
               SSEAlgorithm: AES256
 
 Outputs:
+  GlueStudioProcessingBucketName:
+    Value: !Ref GlueStudioProcessingBucket
+    Export:
+      Name: !Sub "LH:GlueTempBucketName"
+    Description: "Lake House Glue processing bucket name."
   RawZoneBucketArn:
     Value: !GetAtt RawZoneBucket.Arn
     Export:

@@ -82,7 +82,7 @@ Resources:
   PostDataJob:
     Type: AWS::Glue::Job
     Properties:
-      Name: !Sub "${Env}-${DeploymentRootName}-${ComponentID}-data-producer-job-${AWS::AccountId}-${Region}"
+      Name: !Sub "${Env}-${DeploymentRootName}-${ComponentID}-data-supply-job-${AWS::AccountId}-${Region}"
       Description: "Curates cleaned data into the target data lake bucket."
       MaxRetries: 3
       Role: !Ref GlueJobRole
@@ -90,7 +90,7 @@ Resources:
         Name: glueetl
         PythonVersion: "3"
         ScriptLocation: !Join ['', ["s3://", !ImportValue "LZ:ResourceBucketName",  !Sub "/${AccountShorthand}-scripts/post-data.py"]]
-      GlueVersion: "1.0"
+      GlueVersion: "3.0"
       ExecutionProperty:
         MaxConcurrentRuns: 2
       WorkerType: Standard
@@ -104,6 +104,8 @@ Resources:
         "--encryption-type": sse-s3
         "--job-bookmark-option": job-bookmark-enable
         "--TempDir": !Sub 's3://${Env}-${DeploymentRootName}-${ComponentID}-glue-studio-temporary-${AWS::AccountId}-${Region}/post'
+        "--source_bucket_uri": !Join ['', ['s3://', !ImportValue "LZ:ProducerBucketName"]]
+        "--target_bucket_uri": !Join ['', ['s3://', !ImportValue "LZ:LandingZoneBucketName"]]
   ProducerDataJobTrigger:
     Type: AWS::Glue::Trigger
     Properties:
@@ -131,8 +133,8 @@ Resources:
       Command:
         Name: glueetl
         PythonVersion: "3"
-        ScriptLocation: !Join ['', ["s3://", !ImportValue "LZ:ResourceBucketName",  "/${AccountShorthand}-scripts/produce-data.py"]]
-      GlueVersion: "1.0"
+        ScriptLocation: !Join ['', ["s3://", !ImportValue "LZ:ResourceBucketName",  !Sub "/${AccountShorthand}-scripts/produce-data.py"]]
+      GlueVersion: "3.0"
       ExecutionProperty:
         MaxConcurrentRuns: 2
       WorkerType: Standard
@@ -146,3 +148,5 @@ Resources:
         "--encryption-type": sse-s3
         "--job-bookmark-option": job-bookmark-enable
         "--TempDir": !Sub 's3://${Env}-${DeploymentRootName}-${ComponentID}-glue-studio-temporary-${AWS::AccountId}-${Region}/producer'
+        "--source_bucket_uri": !Join ['', ['s3://', !ImportValue "LZ:LandingZoneBucketName"]]
+        "--target_bucket_uri": !Sub 's3://${Env}-${DeploymentRootName}-lh-s3-raw-127700773039-${Region}'

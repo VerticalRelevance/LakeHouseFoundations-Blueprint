@@ -3,10 +3,10 @@
 echo "Begin setting variables.."
 . ../../../scripts/set-variables.sh "lz"
 
-S3StackName="cf-$DeploymentRootName-$AccountShorthand-s3"
+S3StackName="$Env-$DeploymentRootName-$AccountShorthand-s3"
 S3StackPath="../infra/cf-$AccountShorthand-s3.yml"
 
-GlueStackName="cf-$DeploymentRootName-$AccountShorthand-glue"
+GlueStackName="$Env-$DeploymentRootName-$AccountShorthand-glue"
 GlueStackPath="../infra/cf-$AccountShorthand-glue.yml"
 echo "End setting variables."
 
@@ -21,7 +21,7 @@ CompId="$AccountShorthand-s3"
 {
     aws s3 rm $ResourceBucketURI --recursive
     aws s3 rm "s3://$Env-$DeploymentRootName-$CompId-logs-$AccountId-$Region" --recursive
-    aws s3 rm "s3://$Env-$DeploymentRootName-$CompId-glue-tmp-$AccountId-$Region" --recursive
+    aws s3 rm "s3://$Env-$DeploymentRootName-$CompId-glue-temp-$AccountId-$Region" --recursive
 
     aws s3 rm "s3://$Env-$DeploymentRootName-$CompId-lz-bucket-$AccountId-$Region" --recursive
     aws s3 rm "s3://$Env-$DeploymentRootName-$CompId-producer-bucket-$AccountId-$Region" --recursive

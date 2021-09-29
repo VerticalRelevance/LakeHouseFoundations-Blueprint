@@ -71,41 +71,41 @@ See the following README.md doc links for futher details regarding specific acco
 ## Links
 
 ### Lake House Architecture
-[Redshift/Lake House Architecture]: https://aws.amazon.com/redshift/lake-house-architecture/ 
-[Data Lake and Data Mesh Architectures]: https://aws.amazon.com/blogs/big-data/design-a-data-mesh-architecture-using-aws-lake-formation-and-aws-glue/
-[Databricks Definitive Lake House Concepts]: https://databricks.com/research/lakehouse-a-new-generation-of-open-platforms-that-unify-data-warehousing-and-advanced-analytics
-[Lake House Self-Service Analytics Power Point]: https://pages.awscloud.com/rs/112-TZM-766/images/EV_deploy-lake-house-architecture-to-enable-self-service-analytics-with-aws-lake-formation_Jul-2021.pdf
+- [Redshift/Lake House Architecture][]: https://aws.amazon.com/redshift/lake-house-architecture/ 
+- [Data Lake and Data Mesh Architectures][][]: https://aws.amazon.com/blogs/big-data/design-a-data-mesh-architecture-using-aws-lake-formation-and-aws-glue/
+- [Databricks Definitive Lake House Concepts][]: https://databricks.com/research/lakehouse-a-new-generation-of-open-platforms-that-unify-data-warehousing-and-advanced-analytics
+- [Lake House Self-Service Analytics Power Point][]: https://pages.awscloud.com/rs/112-TZM-766/images/EV_deploy-lake-house-architecture-to-enable-self-service-analytics-with-aws-lake-formation_Jul-2021.pdf
 
 ### Lakeformation Setup
-[Changing default Lakeformation Security Settings]: https://docs.aws.amazon.com/lake-formation/latest/dg/change-settings.html 
-[Resource Linking a Shared Catalog Database]: https://docs.aws.amazon.com/lake-formation/latest/dg/creating-resource-links.html
-[Sharing Catalog Resources X-ACNT]: https://docs.aws.amazon.com/lake-formation/latest/dg/sharing-catalog-resources.html
-[Video - Data Mesh Architecture on AWS]: https://www.youtube.com/watch?v=YPYODx4Pfdc
-[Lake Formation Governed Tables]: https://aws.amazon.com/blogs/big-data/part-1-effective-data-lakes-using-aws-lake-formation-part-1-getting-started-with-governed-tables/
+- [Changing default Lakeformation Security Settings][]: https://docs.aws.amazon.com/lake-formation/latest/dg/change-settings.html 
+- [Resource Linking a Shared Catalog Database][]: https://docs.aws.amazon.com/lake-formation/latest/dg/creating-resource-links.html
+- [Sharing Catalog Resources X-ACNT][]: https://docs.aws.amazon.com/lake-formation/latest/dg/sharing-catalog-resources.html
+- [Video - Data Mesh Architecture on AWS][]: https://www.youtube.com/watch?v=YPYODx4Pfdc
+- [Lake Formation Governed Tables][]: https://aws.amazon.com/blogs/big-data/part-1-effective-data-lakes-using-aws-lake-formation-part-1-getting-started-with-governed-tables/
 
 ### Resource Security Setup Links
 #### Cross-account LakeFormation Documentation
-[X-ACNT LAKEFORMATION DOCS]: https://docs.aws.amazon.com/lake-formation/latest/dg/access-control-cross-account.html
+- [X-ACNT LAKEFORMATION DOCS][]: https://docs.aws.amazon.com/lake-formation/latest/dg/access-control-cross-account.html
 #### AWS MSK
-[MSK CF TLS CONGIF]: https://docs.aws.amazon.com/AWSCloudFormation/latest/UserGuide/aws-properties-msk-cluster-tls.html
+- [MSK CF TLS CONGIF][]: https://docs.aws.amazon.com/AWSCloudFormation/latest/UserGuide/aws-properties-msk-cluster-tls.html
 
 ### LakeFormation Integration
 #### Redshift Spectrum
-[Spectrum/LakeFormation]: https://docs.aws.amazon.com/redshift/latest/dg/spectrum-lake-formation.html
-[Athena Federated Query??]: https://github.com/awslabs/aws-athena-query-federation/blob/master/athena-example/athena-example.yaml
-[AWS RedshiftSpectrum POC]: https://github.com/aws-samples/aws-redshift-spectrum-poc/blob/master/cf-templates/redshift-spectrum-poc-env.template
+- [Spectrum/LakeFormation][]: https://docs.aws.amazon.com/redshift/latest/dg/spectrum-lake-formation.html
+- [Athena Federated Query??][]: https://github.com/awslabs/aws-athena-query-federation/blob/master/athena-example/athena-example.yaml
+- [AWS RedshiftSpectrum POC][]: https://github.com/aws-samples/aws-redshift-spectrum-poc/blob/master/cf-templates/redshift-spectrum-poc-env.template
 #### LakeFormation/Redshift-Spectrum/Athena
-[To create an IAM role for Amazon Redshift using an AWS Glue Data Catalog enabled for AWS Lake Formation]: https://docs.aws.amazon.com/redshift/latest/dg/c-getting-started-using-spectrum-create-role.html#spectrum-get-started-create-role-lake-formation
+- [To create an IAM role for Amazon Redshift using an AWS Glue Data Catalog enabled for AWS Lake Formation][]: https://docs.aws.amazon.com/redshift/latest/dg/c-getting-started-using-spectrum-create-role.html#spectrum-get-started-create-role-lake-formation
 
 ### Misc
-[DataBrew Blog with Example CF Stack]: https://aws.amazon.com/blogs/big-data/preparing-data-for-ml-models-using-aws-glue-databrew-in-a-jupyter-notebook/
+- [DataBrew Blog with Example CF Stack][]: https://aws.amazon.com/blogs/big-data/preparing-data-for-ml-models-using-aws-glue-databrew-in-a-jupyter-notebook/
 
 ## Extended Documentation Links
-[Landing Zone Account Docs]: src/accounts/governance/README.md
-[Lake House Account Docs]: src/accounts/lakehouse/README.md
-[Governance Account Docs]: src/accounts/lz/README.md
-[Example Consumer Account Docs]: src/accounts/consumer/README.md
+- [Landing Zone Account Docs][]: src/accounts/governance/README.md
+- [Lake House Account Docs][]: src/accounts/lakehouse/README.md
+- [Governance Account Docs][]: src/accounts/lz/README.md
+- [Example Consumer Account Docs][]: src/accounts/consumer/README.md
 
 ## Images
-[TARGET ARCH DIAGRAM]: ./resources/images/lakehouse-ref-arch-1.png "Reference Architecture Diagram"
-[THE LAKE HOUSE APPROACH]: ./resources/images/aws-the-lake-house-approach.png "\"The Lake House Approach\""
+[TARGET ARCH DIAGRAM][]: ./resources/images/lakehouse-ref-arch-1.png "Reference Architecture Diagram"
+[THE LAKE HOUSE APPROACH][]: ./resources/images/aws-the-lake-house-approach.png "\"The Lake House Approach\""

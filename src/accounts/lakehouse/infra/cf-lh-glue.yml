@@ -86,11 +86,11 @@ Resources:
       Description: "Cleans raw data into the transformed bucket in prep for curation."
       MaxRetries: 3
       Role: !Ref GlueJobRole
+      GlueVersion: "3.0"
       Command:
         Name: glueetl
         PythonVersion: "3"
         ScriptLocation: !Join ['', ["s3://", !ImportValue "LH:ResourceBucketName",  !Sub "/${AccountShorthand}-scripts/clean-data.py"]]
-      GlueVersion: "1.0"
       ExecutionProperty:
         MaxConcurrentRuns: 2
       WorkerType: Standard
@@ -103,7 +103,9 @@ Resources:
         "--enable-metrics": ""
         "--encryption-type": sse-s3
         "--job-bookmark-option": job-bookmark-enable
-        "--TempDir": !Sub 's3://${Env}-${DeploymentRootName}-${ComponentID}-glue-studio-temporary-${AWS::AccountId}-${Region}/clean'
+        "--TempDir": !Join ['', ['s3://', !ImportValue "LH:GlueTempBucketName", '/clean']]
+        "--source_bucket_uri": !Join ['', ['s3://', !ImportValue "LH:RawZoneBucketName"]]
+        "--target_bucket_uri": !Join ['', ['s3://', !ImportValue "LH:TransformedZoneBucketName"]]
 
   TransformedToCuratedJobTrigger:
     Type: AWS::Glue::Trigger
@@ -132,8 +134,8 @@ Resources:
       Command:
         Name: glueetl
         PythonVersion: "3"
-        ScriptLocation: !Join ['', ["s3://", !ImportValue "LH:ResourceBucketName",  "/scripts_lh/curate-data.py"]]
-      GlueVersion: "1.0"
+        ScriptLocation: !Join ['', ["s3://", !ImportValue "LH:ResourceBucketName", !Sub "/${AccountShorthand}-scripts/curate-data.py"]]
+      GlueVersion: "3.0"
       ExecutionProperty:
         MaxConcurrentRuns: 2
       WorkerType: Standard
@@ -146,4 +148,6 @@ Resources:
         "--enable-metrics": ""
         "--encryption-type": sse-s3
         "--job-bookmark-option": job-bookmark-enable
-        "--TempDir": !Sub 's3://${Env}-${DeploymentRootName}-${ComponentID}-glue-studio-temporary-${AWS::AccountId}-${Region}/curate'
+        "--TempDir": !Join ['', ['s3://', !ImportValue "LH:GlueTempBucketName", '/curate']]
+        "--source_bucket_uri": !Join ['', ['s3://', !ImportValue "LH:TransformedZoneBucketName"]]
+        "--target_bucket_uri": !Join ['', ['s3://', !ImportValue "LH:CuratedZoneBucketName"]]

@@ -1,6 +1,11 @@
 #!/bin/bash
 
-TestUserPassword=$1
+# Require 2 arguments
+set -o nounset
+# Test IAM user passwords
+TestUserPassword=$(1?You must supply a password string as the first argument.)
+# Redshift Availability Zone
+pAvailabilityZone=$(2?You must specify the Redshift an availability zone as the second argument.)
 
 echo "Begin setting variables.."
 . ../../../scripts/set-variables.sh "cons"

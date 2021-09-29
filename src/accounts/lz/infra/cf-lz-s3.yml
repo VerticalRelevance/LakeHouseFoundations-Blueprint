@@ -91,13 +91,25 @@ Outputs:
       Name: !Sub "LZ:LzBucketArn"
     Description: "Landing Zone bucket ARN"
 
+  LzBucketName:
+    Value: !Ref LandingZoneBucket
+    Export:
+      Name: !Sub "LZ:LandingZoneBucketName"
+    Description: "The name of the main Lake House LZ bucket"
+
+  ProducerBucketName:
+    Value: !Ref ProducerBucket
+    Export:
+      Name: !Sub "LZ:ProducerBucketName"
+    Description: "The name of the main Lake House LZ bucket"
+
   ResourceBucketArn:
     Value: !GetAtt ResourceBucket.Arn
     Export:
       Name: !Sub "LZ:ResourceBucketArn"
     Description: "Lake House LZ deployment resources bucket ARN"
 
-  ResourceBucketNames:
+  ResourceBucketName:
     Value: !Ref ResourceBucket
     Export:
       Name: !Sub "LZ:ResourceBucketName"

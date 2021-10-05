@@ -48,7 +48,7 @@
 
 testpass=$1
 
-if [ testpass -eq "" ]; then
+if [ ! testpass ]; then
     echo "Supply a test user password as a string argument. Exiting with error."
     exit 0
 fi
@@ -66,18 +66,18 @@ cd ../../../scripts
 vrLabLh
 region1
 cd ../accounts/lakehouse/pipeline
-deploy
+deploy "us-east-1a"
 region2
-deploy
+deploy "us-east-2a"
 cd ../../../scripts
 
 # Governance Account
 vrLabGov
 region1
 cd ../accounts/lakehouse/pipeline
-deploy $testpass
+deploy $testpass "us-east-1a"
 region2
-deploy $testpass
+deploy $testpass "us-east-2a"
 cd ../../../scripts
 
 # Governance Account

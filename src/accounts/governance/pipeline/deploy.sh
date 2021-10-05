@@ -1,6 +1,8 @@
 #!/bin/bash
 
-
+# Require 2 arguments
+set -o nounset
+# Test IAM user passwords
 TestUserPassword=$1
 
 echo "Begin setting variables.."
@@ -8,6 +10,7 @@ echo "Begin setting variables.."
 
 LfStackName="${Env}-$DeploymentRootName-$AccountShorthand-lf"
 LfStackPath="../infra/cf-$AccountShorthand-lakeformation.yml"
+
 echo "End setting variables."
 
 echo "Deploying Lake Formation stack.."
@@ -16,4 +19,5 @@ aws cloudformation deploy \
     --stack-name $LfStackName \
     --template-file $LfStackPath \
     --capabilities CAPABILITY_NAMED_IAM \
-    --parameter-overrides "ComponentID=$CompId" "Env=$Env" "Region=$Region" "TestUserPassword=$TestUserPassword"
+    --parameter-overrides "ComponentID=$CompId" "Env=$Env" "Region=$Region" \
+        "TestUserPassword=$TestUserPassword"

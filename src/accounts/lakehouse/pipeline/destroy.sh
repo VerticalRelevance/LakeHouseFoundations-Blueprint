@@ -16,7 +16,7 @@ aws cloudformation delete-stack --stack-name $GlueStackName --output json
 aws cloudformation wait stack-delete-complete --stack-name $GlueStackName --output json --no-paginate 
 echo "Glue stack deleted."
 
-# Delete bucket objects (Curlys catch any error)
+# Delete bucket objects. {Curlys catch any error} || { echo "Error...not gonna kill your script"}
 CompId="$AccountShorthand-s3"
 {
     echo "Deleting S3 logging bucket objects.."

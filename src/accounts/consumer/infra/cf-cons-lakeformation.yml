@@ -20,7 +20,7 @@ Parameters:
   AccountShorthand:
     Description: Abbreviated logical account identifier
     Type: String
-    Default: cons
+    Default: lh
   Region:
     Description: The region for the template to be deployed.
     Type: String
@@ -31,7 +31,7 @@ Parameters:
   ComponentID:
     Description: This templates' component identifier string
     Type: String
-    Default: cons-lf
+    Default: lh-redshift
   Env:
     Description: The environment in which the account is being deployed.
     Type: String
@@ -58,7 +58,7 @@ Resources:
       EnableDnsHostnames: 'true'
       Tags:
         - Key: Name
-          Value: LF-Workshop-VPC
+          Value: !Sub '${Env}-${DeploymentRootName}-${ComponentID}-vpc-${AWS::AccountId}-${Region}'
   PrivateSubnet:
     Type: 'AWS::EC2::Subnet'
     Properties:

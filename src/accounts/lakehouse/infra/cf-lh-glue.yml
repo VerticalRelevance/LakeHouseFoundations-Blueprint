@@ -71,9 +71,10 @@ Resources:
   RawToTransformedJobTrigger:
     Type: AWS::Glue::Trigger
     Properties:
-      Name: !Sub "${Env}-${DeploymentRootName}-${ComponentID}-data-clean-job-trigger-${AWS::AccountId}-${Region}"
+      Name: !Sub "${Env}-${DeploymentRootName}-${ComponentID}-workflow-scheduled-trigger-${AWS::AccountId}-${Region}"
       WorkflowName: !Ref IngestionWorkflow
-      Type: "ON_DEMAND"
+      Type: "SCHEDULED"
+      Schedule: "cron(0/20 * ? * * *)" # Run every 10 minutes
       Description: "Triggers the data lake ingestion workflow."
       Actions:
         - JobName: !Ref RawToTransformedJob

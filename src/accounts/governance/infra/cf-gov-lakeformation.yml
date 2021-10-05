@@ -31,7 +31,7 @@ Parameters:
   ComponentID:
     Description: This templates' component identifier string
     Type: String
-    Default: gov-lf
+    Default: gov-spectrum
   Env:
     Description: The environment in which the account is being deployed.
     Type: String

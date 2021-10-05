@@ -72,11 +72,13 @@ cd ../accounts/governance/pipeline
 destroy
 region2
 destroy
+cd ../../../scripts
 
 # Consumer Account
-vrLabGov
+vrLabCons1
 region1
 cd ../accounts/consumer/pipeline
 destroy
 region2
 destroy
+cd ../../../scripts

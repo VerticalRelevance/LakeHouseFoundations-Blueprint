@@ -20,11 +20,11 @@ See the section on folder and file structures below for more information on comp
 # Source code structure & conventions
 ## Naming Conventions
 Names for resource definitions in any of the templates in this repository will be structured by the following convention:
-**"${Environment}-${ComponentID}-<ResourceType>-<RelevantSuffix>"**
+**"${Environment}-${CompId}-<ResourceType>-<RelevantSuffix>"**
 Note that, in a pipeline executing an SDLC through to multiple environments, it is intended that CodeBuild pass the relevant parameter values to the Cloudformation deployments, based on what environment the CodeBuild deployment is targeting.
 Where:
 - Env - The environment the templates are deployed in.
-- ComponentID - The logical identifier of the infrastructure template. See the next section for further detail.
+- CompId - The logical identifier of the infrastructure template. See the next section for further detail.
 - ResourceType - Refers to a general name of the resource. For example, "S3"
 - RelevantSuffix [Optional] - Added when you need more than one resource definition in the same template of the same type. For example, "dev-consumer-athena-s3-src" and "dev-consumer-athena-s3-2".
 
@@ -46,7 +46,7 @@ Each of the infrastructure templates in this repository currently contain the fo
     AllowedValues:
       - us-east-2
       - us-east-1
-  ComponentID:
+  CompId:
     Description: This templates' component identifier string
     Type: String
     Default: gov-lf

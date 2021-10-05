@@ -10,7 +10,7 @@ Parameters:
     Description: Abbreviated logical account identifier
     Type: String
     Default: lz
-  ComponentID:
+  CompId:
     Description: This templates' component identifier string
     Type: String
     Default: lz-glue
@@ -34,12 +34,12 @@ Resources:
   ProducerWorkflow:
     Type: AWS::Glue::Workflow
     Properties:
-      Name: !Sub "${Env}-${DeploymentRootName}-${ComponentID}-producer-workflow-${AWS::AccountId}-${Region}"
+      Name: !Sub "${Env}-${DeploymentRootName}-${CompId}-producer-workflow-${AWS::AccountId}-${Region}"
       Description: "Workflow to orchestrate data producer jobs into the S3 data lake."
   GlueJobRole:
     Type: AWS::IAM::Role
     Properties:
-      RoleName: !Sub "${Env}-${DeploymentRootName}-${ComponentID}-role-${AWS::AccountId}-${Region}"
+      RoleName: !Sub "${Env}-${DeploymentRootName}-${CompId}-role-${AWS::AccountId}-${Region}"
       AssumeRolePolicyDocument:
         Version: 2012-10-17
         Statement:
@@ -52,7 +52,7 @@ Resources:
       ManagedPolicyArns:
         - 'arn:aws:iam::aws:policy/service-role/AWSGlueServiceRole'
       Policies:
-        - PolicyName: !Sub '${Env}-${DeploymentRootName}-${ComponentID}-role-policy-${AWS::AccountId}-${Region}'
+        - PolicyName: !Sub '${Env}-${DeploymentRootName}-${CompId}-role-policy-${AWS::AccountId}-${Region}'
           PolicyDocument:
             Version: "2012-10-17"
             Statement:
@@ -71,7 +71,7 @@ Resources:
   PostDataJobTrigger:
     Type: AWS::Glue::Trigger
     Properties:
-      Name: !Sub "${Env}-${DeploymentRootName}-${ComponentID}-post-data-job-trigger-${AWS::AccountId}-${Region}"
+      Name: !Sub "${Env}-${DeploymentRootName}-${CompId}-post-data-job-trigger-${AWS::AccountId}-${Region}"
       WorkflowName: !Ref ProducerWorkflow
       Type: "ON_DEMAND"
       Description: "Triggers the data producer workflow."
@@ -82,7 +82,7 @@ Resources:
   PostDataJob:
     Type: AWS::Glue::Job
     Properties:
-      Name: !Sub "${Env}-${DeploymentRootName}-${ComponentID}-data-supply-job-${AWS::AccountId}-${Region}"
+      Name: !Sub "${Env}-${DeploymentRootName}-${CompId}-data-supply-job-${AWS::AccountId}-${Region}"
       Description: "Curates cleaned data into the target data lake bucket."
       MaxRetries: 3
       Role: !Ref GlueJobRole
@@ -103,13 +103,13 @@ Resources:
         "--enable-metrics": ""
         "--encryption-type": sse-s3
         "--job-bookmark-option": job-bookmark-enable
-        "--TempDir": !Sub 's3://${Env}-${DeploymentRootName}-${ComponentID}-glue-studio-temporary-${AWS::AccountId}-${Region}/post'
+        "--TempDir": !Sub 's3://${Env}-${DeploymentRootName}-${CompId}-glue-studio-temporary-${AWS::AccountId}-${Region}/post'
         "--source_bucket_uri": !Join ['', ['s3://', !ImportValue "LZ:ProducerBucketName"]]
         "--target_bucket_uri": !Join ['', ['s3://', !ImportValue "LZ:LandingZoneBucketName"]]
   ProducerDataJobTrigger:
     Type: AWS::Glue::Trigger
     Properties:
-      Name: !Sub "${Env}-${DeploymentRootName}-${ComponentID}-producer-job-trigger-${AWS::AccountId}-${Region}"
+      Name: !Sub "${Env}-${DeploymentRootName}-${CompId}-producer-job-trigger-${AWS::AccountId}-${Region}"
       WorkflowName: !Ref ProducerWorkflow
       Type: "CONDITIONAL"
       StartOnCreation: true
@@ -126,7 +126,7 @@ Resources:
   ProducerJob:
     Type: AWS::Glue::Job
     Properties:
-      Name: !Sub "${Env}-${DeploymentRootName}-${ComponentID}-producer-job-${AWS::AccountId}-${Region}"
+      Name: !Sub "${Env}-${DeploymentRootName}-${CompId}-producer-job-${AWS::AccountId}-${Region}"
       Description: "Producer into the lake house raw bucket."
       MaxRetries: 3
       Role: !Ref GlueJobRole
@@ -147,6 +147,6 @@ Resources:
         "--enable-metrics": ""
         "--encryption-type": sse-s3
         "--job-bookmark-option": job-bookmark-enable
-        "--TempDir": !Sub 's3://${Env}-${DeploymentRootName}-${ComponentID}-glue-studio-temporary-${AWS::AccountId}-${Region}/producer'
+        "--TempDir": !Sub 's3://${Env}-${DeploymentRootName}-${CompId}-glue-studio-temporary-${AWS::AccountId}-${Region}/producer'
         "--source_bucket_uri": !Join ['', ['s3://', !ImportValue "LZ:LandingZoneBucketName"]]
         "--target_bucket_uri": !Sub 's3://${Env}-${DeploymentRootName}-lh-s3-raw-127700773039-${Region}'

@@ -12,7 +12,7 @@ Metadata:
 
 Parameters:
 
-  ComponentID:
+  CompId:
     Description: This templates' component identifier string
     Type: String
     Default: consumer-lakeformation

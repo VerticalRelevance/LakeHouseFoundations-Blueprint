@@ -28,7 +28,7 @@ Parameters:
     AllowedValues:
       - us-east-2
       - us-east-1
-  ComponentID:
+  CompId:
     Description: This templates' component identifier string
     Type: String
     Default: lh-redshift
@@ -58,7 +58,7 @@ Resources:
       EnableDnsHostnames: 'true'
       Tags:
         - Key: Name
-          Value: !Sub '${Env}-${DeploymentRootName}-${ComponentID}-vpc-${AWS::AccountId}-${Region}'
+          Value: !Sub '${Env}-${DeploymentRootName}-${CompId}-vpc-${AWS::AccountId}-${Region}'
   PrivateSubnet:
     Type: 'AWS::EC2::Subnet'
     Properties:
@@ -266,21 +266,21 @@ Resources:
                     - - 'arn:aws:iam::'
                       - !Ref 'AWS::AccountId'
                       - ':role/LakeFormationWorkflowRole'
-      RoleName: !Sub "${Env}-lakehouse-${ComponentID}-glue-service-role"
+      RoleName: !Sub "${Env}-lakehouse-${CompId}-glue-service-role"
   
   DataLakeBucket:
     Type: 'AWS::S3::Bucket'
     Properties:
-      BucketName: !Sub "${Env}-lakehouse-${ComponentID}-data-lake-bucket" 
+      BucketName: !Sub "${Env}-lakehouse-${CompId}-data-lake-bucket" 
   LFWorkshopBucket:
     Type: 'AWS::S3::Bucket'
     Properties:
-      BucketName: !Sub "${Env}-lakehouse-${ComponentID}-lf-bucket"
+      BucketName: !Sub "${Env}-lakehouse-${CompId}-lf-bucket"
 
   AdminUser:
     Type: 'AWS::IAM::User'
     Properties:
-      UserName: !Sub '${Env}-${DeploymentRootName}-${ComponentID}-lf-admin-${AWS::AccountId}-${Region}'
+      UserName: !Sub '${Env}-${DeploymentRootName}-${CompId}-lf-admin-${AWS::AccountId}-${Region}'
       Path: /
       LoginProfile:
         Password: !Ref TestUserPassword
@@ -338,7 +338,7 @@ Resources:
   DeveloperUser:
     Type: 'AWS::IAM::User'
     Properties:
-      UserName: !Sub '${Env}-${DeploymentRootName}-${ComponentID}-lf-developer-${AWS::AccountId}-${Region}'
+      UserName: !Sub '${Env}-${DeploymentRootName}-${CompId}-lf-developer-${AWS::AccountId}-${Region}'
       Path: /
       LoginProfile:
         Password: !Ref TestUserPassword
@@ -364,13 +364,13 @@ Resources:
   CampaignManagerUser:
     Type: 'AWS::IAM::User'
     Properties:
-      UserName: !Sub '${Env}-${DeploymentRootName}-${ComponentID}-hr-manager-${AWS::AccountId}-${Region}'
+      UserName: !Sub '${Env}-${DeploymentRootName}-${CompId}-hr-manager-${AWS::AccountId}-${Region}'
       Path: /
       LoginProfile:
         Password: !Ref TestUserPassword 
         PasswordResetRequired: false
       Policies:
-        - PolicyName: !Sub '${Env}-${DeploymentRootName}-${ComponentID}-hr-manager-policy-${AWS::AccountId}-${Region}'
+        - PolicyName: !Sub '${Env}-${DeploymentRootName}-${CompId}-hr-manager-policy-${AWS::AccountId}-${Region}'
           PolicyDocument:
             Version: 2012-10-17
             Statement:
@@ -413,18 +413,18 @@ Resources:
                       - /athena-results/*
       ManagedPolicyArns:
         - 'arn:aws:iam::aws:policy/AmazonAthenaFullAccess'
-      UserName: !Sub "${Env}-lakehouse-${ComponentID}-lf-business-analyst"
+      UserName: !Sub "${Env}-lakehouse-${CompId}-lf-business-analyst"
 
   LoggingBucket:  
     Type: 'AWS::S3::Bucket'
     Properties:
-      BucketName: !Sub '${Env}-${DeploymentRootName}-${ComponentID}-logs-${AWS::AccountId}-${Region}'
+      BucketName: !Sub '${Env}-${DeploymentRootName}-${CompId}-logs-${AWS::AccountId}-${Region}'
       AccessControl: LogDeliveryWrite
 
   LfBucket:
     Type: 'AWS::S3::Bucket'
     Properties:
-      BucketName: !Sub '${Env}-${DeploymentRootName}-${ComponentID}-lf-bucket-${AWS::AccountId}-${Region}'
+      BucketName: !Sub '${Env}-${DeploymentRootName}-${CompId}-lf-bucket-${AWS::AccountId}-${Region}'
       LoggingConfiguration:
         DestinationBucketName: !Ref LoggingBucket
         LogFilePrefix: lf-bucket/

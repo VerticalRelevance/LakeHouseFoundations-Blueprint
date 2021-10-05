@@ -10,7 +10,7 @@ Parameters:
     Description: Abbreviated logical account identifier
     Type: String
     Default: lz
-  ComponentID:
+  CompId:
     Description: This templates' component identifier string
     Type: String
     Default: lh-s3
@@ -37,12 +37,12 @@ Resources:
   LoggingBucket:
     Type: 'AWS::S3::Bucket'
     Properties:
-      BucketName: !Sub '${Env}-${DeploymentRootName}-${ComponentID}-logs-${AWS::AccountId}-${Region}'
+      BucketName: !Sub '${Env}-${DeploymentRootName}-${CompId}-logs-${AWS::AccountId}-${Region}'
       AccessControl: LogDeliveryWrite
   GlueStudioProcessingBucket:
     Type: AWS::S3::Bucket
     Properties:
-      BucketName: !Sub '${Env}-${DeploymentRootName}-${ComponentID}-glue-tmp-${AWS::AccountId}-${Region}'
+      BucketName: !Sub '${Env}-${DeploymentRootName}-${CompId}-glue-tmp-${AWS::AccountId}-${Region}'
       LoggingConfiguration:
         DestinationBucketName: !Ref LoggingBucket
         LogFilePrefix: glue-tmp-bucket/
@@ -53,7 +53,7 @@ Resources:
   ResourceBucket:
     Type: AWS::S3::Bucket
     Properties:
-      BucketName: !Sub '${Env}-lakehouse-${ComponentID}-resources-${AWS::AccountId}-${Region}'
+      BucketName: !Sub '${Env}-lakehouse-${CompId}-resources-${AWS::AccountId}-${Region}'
       LoggingConfiguration:
         DestinationBucketName: !Ref LoggingBucket
         LogFilePrefix: resources-bucket/
@@ -64,7 +64,7 @@ Resources:
   RawZoneBucket:
     Type: AWS::S3::Bucket
     Properties: 
-      BucketName: !Sub '${Env}-${DeploymentRootName}-${ComponentID}-raw-${AWS::AccountId}-${Region}'
+      BucketName: !Sub '${Env}-${DeploymentRootName}-${CompId}-raw-${AWS::AccountId}-${Region}'
       LoggingConfiguration:
         DestinationBucketName: !Ref LoggingBucket
         LogFilePrefix: raw-zone-bucket/
@@ -105,7 +105,7 @@ Resources:
   TransformedZoneBucket:
     Type: AWS::S3::Bucket
     Properties: 
-      BucketName: !Sub '${Env}-${DeploymentRootName}-${ComponentID}-transformed-${AWS::AccountId}-${Region}'
+      BucketName: !Sub '${Env}-${DeploymentRootName}-${CompId}-transformed-${AWS::AccountId}-${Region}'
       LoggingConfiguration:
         DestinationBucketName: !Ref LoggingBucket
         LogFilePrefix: transformed-zone-bucket/
@@ -116,7 +116,7 @@ Resources:
   CuratedZoneBucket:
     Type: AWS::S3::Bucket
     Properties:
-      BucketName: !Sub '${Env}-${DeploymentRootName}-${ComponentID}-curated-${AWS::AccountId}-${Region}'
+      BucketName: !Sub '${Env}-${DeploymentRootName}-${CompId}-curated-${AWS::AccountId}-${Region}'
       AccessControl: LogDeliveryWrite
       LoggingConfiguration:
         DestinationBucketName: !Ref LoggingBucket

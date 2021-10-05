@@ -1,17 +1,6 @@
 #!/bin/bash
 
-echo "Begin setting variables.."
-. ../../../scripts/set-variables.sh "cons"
-
-LfStackName="$Env-$DeploymentRootName-$AccountShorthand-lakeformation"
-LfStackPath="../infra/cf-$AccountShorthand-lakeformation.yml"
-
-AthenaStackName="$Env-$DeploymentRootName-$AccountShorthand-athena"
-AthenaStackPath="../infra/cf-$AccountShorthand-athena.yml"
-
-SpectrumStackName="$Env-$DeploymentRootName-$AccountShorthand-redshift-spectrum"
-SpectrumStackPath="../infra/cf-$AccountShorthand-redshift-spectrum.yml"
-echo "End setting variables."
+. ./set-local-variables.sh
 
 # Delete bucket objects. {Curlys catch any error} || { echo "Error...not gonna kill your script"}
 {
@@ -26,8 +15,10 @@ echo "End setting variables."
 aws cloudformation delete-stack --stack-name $AthenaStackName
 aws cloudformation wait stack-delete-complete --stack-name $AthenaStackName --output json --no-paginate
 
-aws cloudformation delete-stack --stack-name $SpectrumStackName
-aws cloudformation wait stack-delete-complete --stack-name $SpectrumStackName --output json --no-paginate
-
 aws cloudformation delete-stack --stack-name $LfStackName
 aws cloudformation wait stack-delete-complete --stack-name $LfStackName --output json --no-paginate
+
+KeyPairName="$Env-$DeploymentRootName-$CompId-redshift-bastion-keypair"
+aws ec2 create-key-pair --key-name "$KeyPairName"
+aws cloudformation delete-stack --stack-name $SpectrumStackName
+aws cloudformation wait stack-delete-complete --stack-name $SpectrumStackName --output json --no-paginate

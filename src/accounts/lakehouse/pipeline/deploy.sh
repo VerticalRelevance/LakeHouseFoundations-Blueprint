@@ -6,25 +6,14 @@ set -o nounset
 # Redshift Availability Zone
 pAvailabilityZone=$2
 
-echo "Begin setting variables.."
-. ../../../scripts/set-variables.sh "lh"
-
-S3StackName="${Env}-$DeploymentRootName-$AccountShorthand-s3"
-S3StackPath="../infra/cf-$AccountShorthand-s3.yml"
-
-GlueStackName="${Env}-$DeploymentRootName-$AccountShorthand-glue"
-GlueStackPath="../infra/cf-$AccountShorthand-glue.yml"
-
-RedshiftStackName="${Env}-$DeploymentRootName-$AccountShorthand-redshift"
-RedshiftStackPath="../infra/cf-$AccountShorthand-redshift.yml"
-echo "End setting variables."
+. ./set-local-variables.sh
 
 echo "Deploying S3 stack.."
 CompId="$AccountShorthand-s3"
 aws cloudformation deploy \
     --stack-name $S3StackName \
     --template-file $S3StackPath \
-    --parameter-overrides "ComponentID=$CompId" "Env=$Env" "Region=$Region" "ResourceBucketName=$ResourceBucketName"\
+    --parameter-overrides "CompId=$CompId" "Env=$Env" "Region=$Region" "ResourceBucketName=$ResourceBucketName"\
     --capabilities CAPABILITY_NAMED_IAM
 
 echo "Syncing resource files to S3 resource bucket.."
@@ -36,14 +25,17 @@ CompId="$AccountShorthand-glue"
 aws cloudformation deploy \
     --stack-name $GlueStackName \
     --template-file $GlueStackPath \
-    --parameter-overrides "ComponentID=$CompId"  "Env=$Env" "Region=$Region" \
+    --parameter-overrides "CompId=$CompId"  "Env=$Env" "Region=$Region" \
     --capabilities CAPABILITY_NAMED_IAM
 
+echo "Deploying Redshift stack.."
+KeyPairName="$Env-$DeploymentRootName-$CompId-redshift-bastion-keypair"
+aws ec2 create-key-pair --key-name "$KeyPairName"
 CompId="$AccountShorthand-redshift"
 aws cloudformation deploy \
-    --stack-name $SpectrumStackName \
-    --template-file $SpectrumStackPath \
+    --stack-name $RedshiftStackName \
+    --template-file $RedshiftStackPath \
     --capabilities CAPABILITY_NAMED_IAM \
-    --parameter-overrides "ComponentID=$CompId" "Env=$Env" \
+    --parameter-overrides "CompId=$CompId" "Env=$Env" \
         "pAvailabilityZone=$pAvailabilityZone" \
-        "pBastionHostEC2KeyPair=dev-lakehouse-cons1-redshift-bastion-keypair"
+        "pBastionHostEC2KeyPair=$KeyPairName"

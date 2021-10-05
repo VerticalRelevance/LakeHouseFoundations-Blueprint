@@ -86,7 +86,7 @@ Parameters:
     AllowedValues:
       - us-east-2
       - us-east-1
-  ComponentID:
+  CompId:
     Description: This templates' component identifier string
     Type: String
     Default: cons-lf

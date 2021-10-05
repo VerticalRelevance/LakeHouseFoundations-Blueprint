@@ -2,7 +2,7 @@ AWSTemplateFormatVersion: 2010-09-09
 Description: Landing Zone Account DataSync resources. We are just syncing 2 S3 buckets in this example
 
 Parameters:
-  ComponentID:
+  CompId:
     Description: This templates' component identifier string
     Type: String
     Default: lz-datasync
@@ -19,7 +19,7 @@ Resources:
   DataSyncSourceBucket:
     Type: AWS::S3::Bucket
     Properties: 
-      BucketName: !Sub "${Env}-lakehouse-${ComponentID}-datasync-source-bucket"
+      BucketName: !Sub "${Env}-lakehouse-${CompId}-datasync-source-bucket"
       BucketEncryption: 
         ServerSideEncryptionConfiguration: 
           - ServerSideEncryptionByDefault:
@@ -28,7 +28,7 @@ Resources:
   DataSyncBucketRole:
     Type: 'AWS::IAM::Role'
     Properties:
-      RoleName: "${Env}-lakehouse-${ComponentID}-datasync-role"
+      RoleName: "${Env}-lakehouse-${CompId}-datasync-role"
       AssumeRolePolicyDocument:
         Version: 2012-10-17
         Statement:
@@ -40,7 +40,7 @@ Resources:
       ManagedPolicyArns:
         - "arn:aws:iam::aws:policy/AWSDataSyncFullAccess"
       Policies:
-        - PolicyName: !Sub "${Env}-${ComponentID}-lakehouse-role-policy"
+        - PolicyName: !Sub "${Env}-${CompId}-lakehouse-role-policy"
           PolicyDocument:
             Version: 2012-10-17
             Statement:

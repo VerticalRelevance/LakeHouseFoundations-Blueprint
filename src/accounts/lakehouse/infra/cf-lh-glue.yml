@@ -10,7 +10,7 @@ Parameters:
     Description: Abbreviated logical account identifier
     Type: String
     Default: lh
-  ComponentID:
+  CompId:
     Description: This templates' component identifier string
     Type: String
     Default: lh-glue
@@ -34,12 +34,12 @@ Resources:
   IngestionWorkflow:
     Type: AWS::Glue::Workflow
     Properties:
-      Name: !Sub "${Env}-${DeploymentRootName}-${ComponentID}-datalake-ingestion-workflow-${AWS::AccountId}-${Region}"
+      Name: !Sub "${Env}-${DeploymentRootName}-${CompId}-datalake-ingestion-workflow-${AWS::AccountId}-${Region}"
       Description: "Workflow to orchestrate data ingestion into the S3 data lake."
   GlueJobRole:
     Type: AWS::IAM::Role
     Properties:
-      RoleName: !Sub "${Env}-${DeploymentRootName}-${ComponentID}-role-${AWS::AccountId}-${Region}"
+      RoleName: !Sub "${Env}-${DeploymentRootName}-${CompId}-role-${AWS::AccountId}-${Region}"
       AssumeRolePolicyDocument:
         Version: 2012-10-17
         Statement:
@@ -52,7 +52,7 @@ Resources:
       ManagedPolicyArns:
         - 'arn:aws:iam::aws:policy/service-role/AWSGlueServiceRole'
       Policies:
-        - PolicyName: !Sub '${Env}-${DeploymentRootName}-${ComponentID}-role-policy-${AWS::AccountId}-${Region}'
+        - PolicyName: !Sub '${Env}-${DeploymentRootName}-${CompId}-role-policy-${AWS::AccountId}-${Region}'
           PolicyDocument:
             Version: "2012-10-17"
             Statement:
@@ -71,7 +71,7 @@ Resources:
   RawToTransformedJobTrigger:
     Type: AWS::Glue::Trigger
     Properties:
-      Name: !Sub "${Env}-${DeploymentRootName}-${ComponentID}-workflow-scheduled-trigger-${AWS::AccountId}-${Region}"
+      Name: !Sub "${Env}-${DeploymentRootName}-${CompId}-workflow-scheduled-trigger-${AWS::AccountId}-${Region}"
       WorkflowName: !Ref IngestionWorkflow
       Type: "SCHEDULED"
       Schedule: "cron(0/20 * ? * * *)" # Run every 10 minutes
@@ -83,7 +83,7 @@ Resources:
   RawToTransformedJob:
     Type: AWS::Glue::Job
     Properties:
-      Name: !Sub "${Env}-${DeploymentRootName}-${ComponentID}-data-prep-job-${AWS::AccountId}-${Region}"
+      Name: !Sub "${Env}-${DeploymentRootName}-${CompId}-data-prep-job-${AWS::AccountId}-${Region}"
       Description: "Cleans raw data into the transformed bucket in prep for curation."
       MaxRetries: 3
       Role: !Ref GlueJobRole
@@ -110,7 +110,7 @@ Resources:
   TransformedToCuratedJobTrigger:
     Type: AWS::Glue::Trigger
     Properties:
-      Name: !Sub "${Env}-${DeploymentRootName}-${ComponentID}-data-curate-job-trigger-${AWS::AccountId}-${Region}"
+      Name: !Sub "${Env}-${DeploymentRootName}-${CompId}-data-curate-job-trigger-${AWS::AccountId}-${Region}"
       WorkflowName: !Ref IngestionWorkflow
       Type: "CONDITIONAL"
       StartOnCreation: true
@@ -127,7 +127,7 @@ Resources:
   TransformedToCuratedJob:
     Type: AWS::Glue::Job
     Properties:
-      Name: !Sub "${Env}-${DeploymentRootName}-${ComponentID}-data-curate-job-${AWS::AccountId}-${Region}"
+      Name: !Sub "${Env}-${DeploymentRootName}-${CompId}-data-curate-job-${AWS::AccountId}-${Region}"
       Description: "Curates cleaned data into the target data lake bucket."
       MaxRetries: 3
       Role: !Ref GlueJobRole

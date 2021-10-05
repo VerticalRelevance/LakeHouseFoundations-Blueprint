@@ -17,7 +17,7 @@ Parameters:
     AllowedValues:
       - us-east-2
       - us-east-1
-  ComponentID:
+  CompId:
     Description: This templates' component identifier string
     Type: String
     Default: lz-s3
@@ -37,12 +37,12 @@ Resources:
   LoggingBucket:
     Type: 'AWS::S3::Bucket'
     Properties:
-      BucketName: !Sub '${Env}-${DeploymentRootName}-${ComponentID}-logs-${AWS::AccountId}-${Region}'
+      BucketName: !Sub '${Env}-${DeploymentRootName}-${CompId}-logs-${AWS::AccountId}-${Region}'
       AccessControl: LogDeliveryWrite
   GlueStudioProcessingBucket:
     Type: AWS::S3::Bucket
     Properties:
-      BucketName: !Sub '${Env}-${DeploymentRootName}-${ComponentID}-glue-tmp-${AWS::AccountId}-${Region}'
+      BucketName: !Sub '${Env}-${DeploymentRootName}-${CompId}-glue-tmp-${AWS::AccountId}-${Region}'
       LoggingConfiguration:
         DestinationBucketName: !Ref LoggingBucket
         LogFilePrefix: glue-tmp/
@@ -64,7 +64,7 @@ Resources:
   LandingZoneBucket:
     Type: AWS::S3::Bucket
     Properties: 
-      BucketName: !Sub "${Env}-${DeploymentRootName}-${ComponentID}-lz-bucket-${AWS::AccountId}-${Region}"
+      BucketName: !Sub "${Env}-${DeploymentRootName}-${CompId}-lz-bucket-${AWS::AccountId}-${Region}"
       LoggingConfiguration:
         DestinationBucketName: !Ref LoggingBucket
         LogFilePrefix: landing-zone-bucket/
@@ -75,7 +75,7 @@ Resources:
   ProducerBucket:
     Type: AWS::S3::Bucket
     Properties: 
-      BucketName: !Sub "${Env}-${DeploymentRootName}-${ComponentID}-producer-bucket-${AWS::AccountId}-${Region}"
+      BucketName: !Sub "${Env}-${DeploymentRootName}-${CompId}-producer-bucket-${AWS::AccountId}-${Region}"
       LoggingConfiguration:
         DestinationBucketName: !Ref LoggingBucket
         LogFilePrefix: producer-bucket/

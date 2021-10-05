@@ -4,43 +4,30 @@
 set -o nounset
 # Test IAM user passwords
 TestUserPassword=$1
-# Redshift Availability Zone
-pAvailabilityZone=$2
 
-echo "Begin setting variables.."
-. ../../../scripts/set-variables.sh "cons"
-
-LfStackName="${Env}-$DeploymentRootName-$AccountShorthand-lakeformation"
-LfStackPath="../infra/cf-$AccountShorthand-lakeformation.yml"
-
-AthenaStackName="${Env}-$DeploymentRootName-$AccountShorthand-athena"
-AthenaStackPath="../infra/cf-$AccountShorthand-athena.yml"
-
-SpectrumStackName="${Env}-$DeploymentRootName-$AccountShorthand-redshift-spectrum"
-SpectrumStackPath="../infra/cf-$AccountShorthand-redshift-spectrum.yml"
-echo "End setting variables."
+. ./set-local-variables.sh
 
 CompId="$AccountShorthand-lf"
 aws cloudformation deploy \
     --stack-name $LfStackName \
     --template-file $LfStackPath \
     --capabilities CAPABILITY_NAMED_IAM \
-    --parameter-overrides "ComponentID=$CompId" "Env=$Env" "Region=$Region" "TestUserPassword=$TestUserPassword"
+    --parameter-overrides "CompId=$CompId" "Env=$Env" "Region=$Region" "TestUserPassword=$TestUserPassword"
 
 CompId="$AccountShorthand-athena"
 aws cloudformation deploy \
     --stack-name $AthenaStackName \
     --template-file $AthenaStackPath \
     --capabilities CAPABILITY_NAMED_IAM \
-    --parameter-overrides "ComponentID=$CompId" "Env=$Env"
+    --parameter-overrides "CompId=$CompId" "Env=$Env"
 
+KeyPairName="$Env-$DeploymentRootName-$CompID-redshift-bastion-keypair"
+aws ec2 create-key-pair --key-name "$KeyPairName"
 CompId="$AccountShorthand-redshift"
 aws cloudformation deploy \
     --stack-name $SpectrumStackName \
     --template-file $SpectrumStackPath \
     --capabilities CAPABILITY_NAMED_IAM \
-    --parameter-overrides "ComponentID=$CompId" "Env=$Env" \
+    --parameter-overrides "CompId=$CompId" "Env=$Env" \
         "pAvailabilityZone=$pAvailabilityZone" \
-        "pBastionHostEC2KeyPair=dev-lakehouse-cons1-redshift-bastion-keypair"
-
-# Run integration tests for deployment
+        "pBastionHostEC2KeyPair=$KeyPairName"

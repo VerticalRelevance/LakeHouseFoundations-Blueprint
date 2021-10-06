@@ -8,6 +8,7 @@ aws cloudformation delete-stack --stack-name $GlueStackName --output json
 aws cloudformation wait stack-delete-complete --stack-name $GlueStackName --output json --no-paginate 
 echo "Glue stack deleted."
 
+echo "Deleting S3 stack.."
 # Delete bucket objects. {Curlys catch any error} || { echo "Error...not gonna kill your script"}
 CompId="$AccountShorthand-s3"
 {
@@ -22,8 +23,12 @@ CompId="$AccountShorthand-s3"
 } || {
     echo "Error deleting bucket objects. It is likely already deleted. Check."
 }
-
-echo "Deleting S3 stack.."
 aws cloudformation delete-stack --stack-name $S3StackName
 aws cloudformation wait stack-delete-complete --stack-name $S3StackName --output json --no-paginate 
 echo "S3 stack deleted."
+
+echo "Deleting Redshift stack.."
+aws ec2 delete-key-pair --key-name "$KeyPairName"
+aws cloudformation delete-stack --stack-name $RedshiftStackName
+aws cloudformation wait stack-delete-complete --stack-name $RedshiftStackName --output json --no-paginate
+echo "Redshift stack deleted"

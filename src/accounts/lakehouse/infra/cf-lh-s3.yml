@@ -125,6 +125,32 @@ Resources:
         ServerSideEncryptionConfiguration: 
           - ServerSideEncryptionByDefault:
               SSEAlgorithm: AES256
+  CuratedZoneBucketPolicy: # Allows access for Gov account
+    Type: AWS::S3::BucketPolicy
+    Properties:
+      Bucket: !Ref CuratedZoneBucket
+      PolicyDocument:
+        Version: 2012-10-17
+        Statement:
+          - Action:
+              - 's3:List*'
+              - 's3:Get*'
+            Effect: Allow
+            Resource: 
+              - !Join ['', ['arn:aws:s3:::', !Ref CuratedZoneBucket]]
+              - !Join ['', ['arn:aws:s3:::', !Ref CuratedZoneBucket, '/*']]
+            Principal:
+              AWS:
+                - "arn:aws:iam::488653863644:root"
+          - Action:
+              - 's3:*'
+            Effect: Allow
+            Resource: 
+              - !Join ['', ['arn:aws:s3:::', !Ref CuratedZoneBucket, '/*']]
+            Principal:
+              Service:
+                - glue.amazonaws.com
+                - lakeformation.amazonaws.com
 
 Outputs:
   GlueStudioProcessingBucketName:

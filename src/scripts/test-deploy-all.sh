@@ -1,7 +1,7 @@
 #!/bin/bash
 
 ###
-# To use the script below, the following alias definitions must be setup in your terminal scope. Make sure you do this in a script file outside
+# To use the uncommented script below, the following alias definitions must be setup in your terminal scope. Make sure you do this in a script file outside
 #   this repository, to ensure you don't push access credentials.
 # This file requires 1 argunment.
 #  1) testpass - The password for the test users created in the Lake Formation accounts.
@@ -38,13 +38,14 @@
 # alias region1="aws configure set region us-east-1"
 # alias region2="aws configure set region us-east-2"
 
-# alias deploy=". ./deploy.sh"
 # alias list-active-stacks="aws cloudformation list-stacks --stack-status-filter \"CREATE_COMPLETE\" \"UPDATE_COMPLETE\""
 # alias list-broken-stacks="aws cloudformation list-stacks --stack-status-filter \"UPDATE_ROLLBACK_COMPLETE\" \"DELETE_FAILED\" \"UPDATE_ROLLBACK_FAILED\" \"CREATE_FAILED\""
 
 ###
 # Once you've setup the above (OUTSIDE OF THIS REPOSITORY!), you can run the following...
 ###
+set -o nounset
+alias deploy=". ./deploy.sh"
 
 testpass=$1
 
@@ -74,28 +75,40 @@ cd ../../../scripts
 # Governance Account
 vrLabGov
 region1
-cd ../accounts/lakehouse/pipeline
+cd ../accounts/governance/pipeline
+deploy $testpass
+region2
+deploy $testpass
+cd ../../../scripts
+
+# Consumer Account
+vrLabCons1
+region1
+cd ../accounts/consumer/pipeline
 deploy $testpass "us-east-1a"
 region2
 deploy $testpass "us-east-2a"
 cd ../../../scripts
 
-# Governance Account
-vrLabCons1
-region1
-cd ../accounts/consumer/pipeline
-deploy $testpass
-region2
-deploy $testpass
-cd ../../../scripts
-
 ###
-# Now setup all account laekformation configurations not currently supported in Cloudformation.
+# Now setup Lake Formation...
 ###
 
-# Allow Glue Role in LZ account access to LH Account Raw bucket
-# echo "Configuring X-account bucket access"
-# aws iam create-policy --policy-name my-policy --policy-document file://policy.json
-# aws iam attach-role-policy --policy-arn arn:aws:iam::aws:policy/ReadOnlyAccess --role-name ReadOnlyRole
-# echo "X-account bucket access configured."
+#### Governance Account
+# Ensure the prerequisites are satisfied: Setting up X-account permissions for consumer. See https://docs.aws.amazon.com/lake-formation/latest/dg/cross-account-prereqs.html
+# Go to Gov Lake Formation console and add lf-admin as Lake Formation Admin
+# Change Default Catalog Settings Remove Default Catalog Behavior in Lake Formation settings. See: https://docs.aws.amazon.com/lake-formation/latest/dg/change-settings.html
 
+#### Consumer Account
+# Go to Consumer Lake Formation console and add hr-manager as Lake Formation Admin
+# Change Default Catalog Settings Remove Default Catalog Behavior in Lake Formation settings. See: https://docs.aws.amazon.com/lake-formation/latest/dg/change-settings.html
+
+
+### Now here are manual steps end-to-end
+# Upload sample json to s3
+
+# Run LZ Workflow
+
+# Run LH Workflow
+
+# Run Gov Crawler

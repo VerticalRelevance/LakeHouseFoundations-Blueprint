@@ -4,7 +4,7 @@
 # Require 1 argument
 set -o nounset
 # Redshift Availability Zone
-pAvailabilityZone=$2
+pAvailabilityZone="$1"
 
 . ./set-local-variables.sh
 
@@ -29,6 +29,7 @@ aws cloudformation deploy \
     --capabilities CAPABILITY_NAMED_IAM
 
 echo "Deploying Redshift stack.."
+# ! Do not create key pair here. This is for the reference architecture automation. Replace KeyPairName with name of predefined key pair.
 KeyPairName="$Env-$DeploymentRootName-$CompId-redshift-bastion-keypair"
 aws ec2 create-key-pair --key-name "$KeyPairName"
 CompId="$AccountShorthand-redshift"

@@ -78,7 +78,7 @@ Parameters:
   AccountShorthand:
     Description: Abbreviated logical account identifier
     Type: String
-    Default: lz
+    Default: cons
   Region:
     Description: The region for the template to be deployed.
     Type: String

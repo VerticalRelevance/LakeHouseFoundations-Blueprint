@@ -3,7 +3,7 @@
 # Require 2 arguments
 set -o nounset
 # Test IAM user passwords
-TestUserPassword=$1
+TestUserPassword="$1"
 
 . ./set-local-variables.sh
 

@@ -3,12 +3,14 @@
 echo "Begin setting variables.."
 . ../../../scripts/set-variables.sh "cons"
 
-LfStackName="$Env-$DeploymentRootName-$AccountShorthand-lakeformation"
-LfStackPath="../infra/cf-$AccountShorthand-lakeformation.yml"
+export LfStackName="$Env-$DeploymentRootName-$AccountShorthand-lakeformation"
+export LfStackPath="../infra/cf-$AccountShorthand-lakeformation.yml"
 
-AthenaStackName="$Env-$DeploymentRootName-$AccountShorthand-athena"
-AthenaStackPath="../infra/cf-$AccountShorthand-athena.yml"
+export AthenaStackName="$Env-$DeploymentRootName-$AccountShorthand-athena"
+export AthenaStackPath="../infra/cf-$AccountShorthand-athena.yml"
 
-SpectrumStackName="$Env-$DeploymentRootName-$AccountShorthand-redshift-spectrum"
-SpectrumStackPath="../infra/cf-$AccountShorthand-redshift-spectrum.yml"
+export SpectrumStackName="$Env-$DeploymentRootName-$AccountShorthand-redshift-spectrum"
+export SpectrumStackPath="../infra/cf-$AccountShorthand-redshift-spectrum.yml"
+
+export KeyPairName="$Env-$DeploymentRootName-$CompId-redshift-bastion-keypair-$Region"
 echo "End setting variables."

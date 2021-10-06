@@ -31,7 +31,7 @@ Parameters:
   CompId:
     Description: This templates' component identifier string
     Type: String
-    Default: gov-spectrum
+    Default: gov-lf
   Env:
     Description: The environment in which the account is being deployed.
     Type: String
@@ -186,7 +186,7 @@ Resources:
       ServiceName: !Sub 'com.amazonaws.${AWS::Region}.s3'
       VpcId: !Ref LakeFormationVPC
 
-  GlueServiceRole:
+  LfServiceRole:
     Type: 'AWS::IAM::Role'
     Properties:
       RoleName: !Sub '${Env}-${DeploymentRootName}-${CompId}-glue-role-${AWS::AccountId}-${Region}'
@@ -281,18 +281,42 @@ Resources:
                   - !Join [ '', ["arn:aws:glue:*:*:", "*"]]
                   - !Join [ '', ["arn:aws:lakeformation:*:*", "*"]]
                   - !Join [ '', ["arn:aws:logs:*:*:", "*"]]
+
+  GovGlueDatabase:
+    Type: AWS::Glue::Database
+    Properties: 
+      CatalogId: !Sub '${AWS::AccountId}'
+      DatabaseInput:
+        Name: !Sub '${Env}-${DeploymentRootName}-${CompId}-db-${AWS::AccountId}-${Region}'
+
+  # This creates curated bucket table (so that the table can be exposed to the consumer account before the first crawl)
+  GovGlueTable:
+    Type: AWS::Glue::Table
+    Properties:
+      CatalogId: !Sub '${AWS::AccountId}'
+      DatabaseName: !Ref GovGlueDatabase
+      TableInput:
+        Name: !Join ['_', !Split ['-', !Sub "${Env}-${DeploymentRootName}-lh-s3-curated-127700773039-${Region}"]]
+
   GovGlueCrawler:
     Type: AWS::Glue::Crawler
     Properties:
-      Name: !Sub '${Env}-${DeploymentRootName}-${CompId}-datalake-crawler-${AWS::AccountId}-${Region}'
+      Name: !Sub '${Env}-${DeploymentRootName}-${CompId}-crawler-${AWS::AccountId}-${Region}'
       Description: Crawler of desired data resource
-      Role: !Ref GlueServiceRole 
-      DatabaseName: !Sub '${Env}-${DeploymentRootName}-${CompId}-db-${AWS::AccountId}-${Region}'
+      Role: !Ref LfServiceRole
+      DatabaseName: !Ref GovGlueDatabase
       Targets:
         S3Targets: 
           - 
-            Path: !Sub "${Env}-${DeploymentRootName}-lh-s3-curated-${AWS::AccountId}-${Region}"
+            Path: !Sub "${Env}-${DeploymentRootName}-lh-s3-curated-127700773039-${Region}"
       Configuration: "{\"Version\":1.0,\"CrawlerOutput\":{\"Partitions\":{\"AddOrUpdateBehavior\":\"InheritFromTable\"},\"Tables\":{\"AddOrUpdateBehavior\":\"MergeNewColumns\"}}}"
+  
+  LfCuratedBucketResource:
+    Type: AWS::LakeFormation::Resource
+    Properties: 
+      ResourceArn: !Join ["", ["arn:aws:s3:::", !Sub '${Env}-${DeploymentRootName}-${CompId}-crawler-${AWS::AccountId}-${Region}']]
+      RoleArn: !GetAtt LfServiceRole.Arn
+      UseServiceLinkedRole: false
 
   LoggingBucket:
     Type: 'AWS::S3::Bucket'

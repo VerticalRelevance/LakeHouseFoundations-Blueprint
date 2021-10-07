@@ -142,6 +142,7 @@ Resources:
             Principal:
               AWS:
                 - "arn:aws:iam::488653863644:root"
+                - "arn:aws:iam::456886174736:role/dev-lakehouse-cons-redshift-rRedshiftSpectrumRole-8EZINP1YD4XV"
           - Action:
               - 's3:*'
             Effect: Allow

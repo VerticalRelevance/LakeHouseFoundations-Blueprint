@@ -244,8 +244,7 @@ Resources:
             Statement:
               - Effect: Allow
                 Action:
-                  - 'lakeformation:GetDataAccess'
-                  - 'lakeformation:GrantPermissions'
+                  - 'lakeformation:*'
                 Resource: '*'
         - PolicyName: !Sub '${Env}-${DeploymentRootName}-${CompId}-glue-role-policy-4-${AWS::AccountId}-${Region}'
           PolicyDocument:
@@ -279,7 +278,7 @@ Resources:
                 Resource:
                   - !Join [ '', ["arn:aws:s3:::*"]] 
                   - !Join [ '', ["arn:aws:glue:*:*:", "*"]]
-                  - !Join [ '', ["arn:aws:lakeformation:*:*", "*"]]
+                  - !Join [ '', ["arn:aws:lakeformation:*:*:", "*"]]
                   - !Join [ '', ["arn:aws:logs:*:*:", "*"]]
 
   LoggingBucket:
@@ -343,25 +342,65 @@ Resources:
       LoginProfile:
         Password: !Ref TestUserPassword 
         PasswordResetRequired: false
+      ManagedPolicyArns:
+        - 'arn:aws:iam::aws:policy/AmazonAthenaFullAccess'
+        - 'arn:aws:iam::aws:policy/AWSLakeFormationCrossAccountManager'
+        - 'arn:aws:iam::aws:policy/AmazonEC2ReadOnlyAccess'
       Policies:
-        - PolicyName: !Sub '${Env}-${DeploymentRootName}-${CompId}-hr-manager-policy-${AWS::AccountId}-${Region}'
+        - PolicyName: LF-DataLake-Admin-Policy
           PolicyDocument:
             Version: 2012-10-17
             Statement:
               - Effect: Allow
                 Action:
-                  - 's3:Put*' # Testing first without explicit LF access (should be configured through LF, not IAM)
-                  - 's3:Get*'
-                  - 's3:List*'
+                  - 'lakeformation:*'
+                  - 'lakeformation:Drop*'
+                  - 'cloudtrail:DescribeTrails'
+                  - 'cloudtrail:LookupEvents'
+                  - 'glue:*'
+                  - 's3:ListBucket'
+                  - 's3:GetBucketLocation'
+                  - 's3:ListAllMyBuckets'
+                  - 's3:GetBucketAcl'
+                  - 'iam:ListUsers'
+                  - 'iam:ListRoles'
+                  - 'iam:GetRole'
+                  - 'iam:GetRolePolicy'
+                  - 'cloudformation:*'
+                  - 'elasticmapreduce:*'
+                  - 'tag:Get*'
+                  - 'glue:BatchGetCrawlers'
+                  - 'ec2:AuthorizeSecurityGroupEgress'
+                  - 'ec2:AuthorizeSecurityGroupIngress'
+                  - 'ec2:RevokeSecurityGroupEgress'
+                  - 'ec2:RevokeSecurityGroupIngress'
                   - 'redshift:*'
+                  - 'redshift-data:*'
+                Resource: '*'
+              - Effect: Allow
+                Action: 'iam:PassRole'
                 Resource:
-                  - !Join 
-                    - ''
-                    - - 'arn:aws:s3:::'
-                      - !Ref LfBucket
-                      - /athena-results/*
-      ManagedPolicyArns:
-        - 'arn:aws:iam::aws:policy/AmazonAthenaFullAccess'
+                  - '*'
+        # - PolicyName: !Sub '${Env}-${DeploymentRootName}-${CompId}-hr-manager-policy-${AWS::AccountId}-${Region}'
+        #   PolicyDocument:
+        #     Version: 2012-10-17
+        #     Statement:
+        #       - Effect: Allow
+        #         Action:
+        #           - 's3:Put*' # Testing first without explicit LF access (should be configured through LF, not IAM)
+        #           - 's3:Get*'
+        #           - 's3:List*'
+        #           - 'redshift:*'
+        #           - 'lakeformation:*'
+        #           - 'glue:*'
+        #         Resource:
+        #           - !Join 
+        #             - ''
+        #             - - 'arn:aws:s3:::'
+        #               - 'arn:aws:lakeformation:*:*:*'
+        #               - 'arn:aws:glue:*:*:*'
+        #               - !Ref LfBucket
+        #               - /athena-results/*
   BusinessAnalystUser:
     Type: 'AWS::IAM::User'
     Properties:

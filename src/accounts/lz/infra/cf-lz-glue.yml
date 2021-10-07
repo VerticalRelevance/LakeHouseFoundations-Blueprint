@@ -66,7 +66,7 @@ Resources:
                 Resource:
                   - !Join [ '', ["arn:aws:s3:::*"]]
                   - !Join [ '', ["arn:aws:glue:*:*:", "*"]]
-                  - !Join [ '', ["arn:aws:lakeformation:*:*", "*"]]
+                  - !Join [ '', ["arn:aws:lakeformation:*:*:*"]]
                   - !Join [ '', ["arn:aws:logs:*:*:", "*"]]
   PostDataJobTrigger:
     Type: AWS::Glue::Trigger

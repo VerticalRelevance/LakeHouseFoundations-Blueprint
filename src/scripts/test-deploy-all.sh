@@ -94,15 +94,41 @@ cd ../../../scripts
 # Now setup Lake Formation...
 ###
 
-#### Governance Account
+### Governance Account
 # Ensure the prerequisites are satisfied: Setting up X-account permissions for consumer. See https://docs.aws.amazon.com/lake-formation/latest/dg/cross-account-prereqs.html
 # Go to Gov Lake Formation console and add lf-admin as Lake Formation Admin
 # Change Default Catalog Settings Remove Default Catalog Behavior in Lake Formation settings. See: https://docs.aws.amazon.com/lake-formation/latest/dg/change-settings.html
 
-#### Consumer Account
+### Consumer Account
 # Go to Consumer Lake Formation console and add hr-manager as Lake Formation Admin
 # Change Default Catalog Settings Remove Default Catalog Behavior in Lake Formation settings. See: https://docs.aws.amazon.com/lake-formation/latest/dg/change-settings.html
+# Create a resource link to the database within the Lakeformation console (This is required for shared tables, and is documented here: https://docs.aws.amazon.com/lake-formation/latest/dg/resource-links-about.html)
+# Login as the hr-manager and configure access for the developer and business analyst
+# 
 
+## Redshift Setup
+# Open the console and connect to your database:
+# Create the external query (this is the most important thing in the entire reference architecture!)
+#    *Note the database name is derived from the jdbc url given in the cluster console details.
+# ------
+# create external schema hr_data
+# from data catalog 
+# database '<GlueCatalogDatabaseName>'
+# iam_role '<redshiftRoleArn>'
+# ------
+# You should now be able to run queries against your lakeformation catalog:
+# ------
+# SELECT * FROM hr_data.<GlueCatalogDatabaseTableName>
+# ------
+# *Note that the above query will return different results depending on who you are logged in as.
+
+
+# Once you have completed the above steps, the governance catalog database and tables will be available in the Consumer account.
+# You can login with each of the roles to see their respective tables and columns
+
+### Consumer Account Redshift-Spectrum setup
+# Open newly created Redshift cluster in the Consumer acount
+# 
 
 ### Now here are manual steps end-to-end
 # Upload sample json to s3
@@ -112,3 +138,5 @@ cd ../../../scripts
 # Run LH Workflow
 
 # Run Gov Crawler
+
+

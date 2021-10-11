@@ -29,6 +29,15 @@ Parameters:
     AllowedValues:
       - us-east-2
       - us-east-1
+  ResourceBucketName:
+    Description: The name of the deployment resource bucket.
+    Type: String
+  WorkflowInitiatorS3Location:
+    Description: The location of the Lambda Glue Workflow Initiator script.
+    Type: String
+  WorkfowInitiatorFileName:
+    Description: The name of the file in the workflow initiator zip file.
+    Type: String
 
 Resources:
   ProducerWorkflow:
@@ -36,18 +45,18 @@ Resources:
     Properties:
       Name: !Sub "${Env}-${DeploymentRootName}-${CompId}-producer-workflow-${AWS::AccountId}-${Region}"
       Description: "Workflow to orchestrate data producer jobs into the S3 data lake."
-  GlueJobRole:
+  
+  GlueJobRole2:
     Type: AWS::IAM::Role
     Properties:
-      RoleName: !Sub "${Env}-${DeploymentRootName}-${CompId}-role-${AWS::AccountId}-${Region}"
+      RoleName: !Sub "${Env}-${DeploymentRootName}-${CompId}-x-account-role-${AWS::AccountId}-${Region}"
       AssumeRolePolicyDocument:
         Version: 2012-10-17
         Statement:
           - Effect: Allow
             Principal:
-              Service:
-                - glue.amazonaws.com
-                - lakeformation.amazonaws.com
+              AWS:
+                - "arn:aws:iam::127700773039:root"
             Action: 'sts:AssumeRole'
       ManagedPolicyArns:
         - 'arn:aws:iam::aws:policy/service-role/AWSGlueServiceRole'
@@ -64,10 +73,42 @@ Resources:
                   - "logs:*"
                   - "lakeformation:*"
                 Resource:
-                  - !Join [ '', ["arn:aws:s3:::*"]]
-                  - !Join [ '', ["arn:aws:glue:*:*:", "*"]]
-                  - !Join [ '', ["arn:aws:lakeformation:*:*:*"]]
-                  - !Join [ '', ["arn:aws:logs:*:*:", "*"]]
+                  - "*"
+  GlueJobRole:
+    Type: AWS::IAM::Role
+    Properties:
+      RoleName: !Sub "${Env}-${DeploymentRootName}-${CompId}-role-${AWS::AccountId}-${Region}"
+      AssumeRolePolicyDocument:
+        Version: 2012-10-17
+        Statement:
+          - Effect: Allow
+            Principal:
+              AWS: 
+                - "arn:aws:iam::127700773039:root"
+              Service:
+                - lambda.amazonaws.com
+            Action: 'sts:AssumeRole'
+      ManagedPolicyArns:
+        - 'arn:aws:iam::aws:policy/service-role/AWSGlueServiceRole'
+      Policies:
+        - PolicyName: !Sub '${Env}-${DeploymentRootName}-${CompId}-role-policy-${AWS::AccountId}-${Region}'
+          PolicyDocument:
+            Version: "2012-10-17"
+            Statement:
+              -
+                Effect: "Allow"
+                Action: 
+                  - "s3:*"
+                  - "glue:*"
+                  - "logs:*"
+                  - "lakeformation:*"
+                  - "lambda:*"
+                Resource:
+                  - "arn:aws:s3:::*"
+                  - "arn:aws:glue:*:*:*"
+                  - "arn:aws:lakeformation:*:*:*"
+                  - "arn:aws:logs:*:*:*"
+                  - "arn:aws:lambda:*:*:*"
   PostDataJobTrigger:
     Type: AWS::Glue::Trigger
     Properties:
@@ -113,7 +154,7 @@ Resources:
       WorkflowName: !Ref ProducerWorkflow
       Type: "CONDITIONAL"
       StartOnCreation: true
-      Description: "Initiates curation job under the condition that the data cleaning job runs successfully."
+      Description: "Initiates producer job."
       Actions:
         - JobName: !Ref ProducerJob
           Arguments:
@@ -150,3 +191,45 @@ Resources:
         "--TempDir": !Sub 's3://${Env}-${DeploymentRootName}-${CompId}-glue-studio-temporary-${AWS::AccountId}-${Region}/producer'
         "--source_bucket_uri": !Join ['', ['s3://', !ImportValue "LZ:LandingZoneBucketName"]]
         "--target_bucket_uri": !Sub 's3://${Env}-${DeploymentRootName}-lh-s3-raw-127700773039-${Region}'
+
+  WorkflowInitiatorPermission:
+    Type: AWS::Lambda::Permission
+    Properties: 
+      Action: lambda:InvokeFunction
+      FunctionName: !Ref WorkflowInitiator
+      Principal: 127700773039
+
+  WorkflowInitiator:
+    Type: AWS::Lambda::Function
+    Properties:
+      FunctionName: !Sub "${Env}-${DeploymentRootName}-${CompId}-workflow-initiator-${AWS::AccountId}-${Region}"
+      Runtime: python3.9
+      Role: !GetAtt GlueJobRole.Arn
+      Handler: !Sub "${WorkfowInitiatorFileName}.initiate_workflow"
+      Code:
+        S3Key: !Ref WorkflowInitiatorS3Location
+        S3Bucket: !Ref ResourceBucketName
+      Environment:
+        Variables: 
+          GlueWorkflowName: !Join [ "396791034774", !Split  ["127700773039", !Ref ProducerWorkflow]]
+
+  WorkflowStatusCheckerPermission:
+    Type: AWS::Lambda::Permission
+    Properties: 
+      Action: lambda:InvokeFunction
+      FunctionName: !Ref WorkflowStatusChecker
+      Principal: 127700773039
+
+  WorkflowStatusChecker:
+    Type: AWS::Lambda::Function
+    Properties:
+      FunctionName: !Sub "${Env}-${DeploymentRootName}-${CompId}-workflow-status-${AWS::AccountId}-${Region}"
+      Runtime: python3.9
+      Role: !GetAtt GlueJobRole.Arn
+      Handler: !Sub "${WorkfowInitiatorFileName}.get_workflow_state"
+      Code:
+        S3Key: !Ref WorkflowInitiatorS3Location
+        S3Bucket: !Ref ResourceBucketName
+      Environment:
+        Variables: 
+          GlueWorkflowName: !Join [ "396791034774", !Split  ["127700773039", !Ref ProducerWorkflow]]

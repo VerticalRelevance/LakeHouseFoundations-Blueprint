@@ -44,7 +44,15 @@ Parameters:
     Type: String
     Description: Password for all test users.
     NoEcho: true
-
+  ResourceBucketName:
+    Description: The name of the deployment resource bucket.
+    Type: String
+  WorkflowInitiatorS3Location:
+    Description: The location of the Lambda Glue Workflow Initiator script.
+    Type: String
+  WorkfowInitiatorFileName:
+    Description: The name of the file in the workflow initiator zip file.
+    Type: String
 Resources:
   LakeFormationVPC:
     Type: 'AWS::EC2::VPC'
@@ -185,7 +193,6 @@ Resources:
         - !Ref InternetGatewayRouteTable
       ServiceName: !Sub 'com.amazonaws.${AWS::Region}.s3'
       VpcId: !Ref LakeFormationVPC
-
   LfServiceRole:
     Type: 'AWS::IAM::Role'
     Properties:
@@ -195,14 +202,17 @@ Resources:
         Statement:
           - Effect: Allow
             Principal:
+              AWS: 
+                - "arn:aws:iam::127700773039:root"
               Service:
                 - glue.amazonaws.com
                 - lakeformation.amazonaws.com
                 - firehose.amazonaws.com
+                - lambda.amazonaws.com
             Action: 'sts:AssumeRole'
       ManagedPolicyArns:
         - 'arn:aws:iam::aws:policy/service-role/AWSGlueServiceRole'
-        - 'arn:aws:iam::aws:policy/AmazonKinesisFullAccess'
+        - 'arn:aws:iam::aws:policy/AmazonKinesisFullAccess' # Don't need this but to-be-removed
       Policies:
         - PolicyName: !Sub '${Env}-${DeploymentRootName}-${CompId}-glue-role-policy-1-${AWS::AccountId}-${Region}'
           PolicyDocument:
@@ -276,19 +286,19 @@ Resources:
                   - "glue:*"
                   - "logs:*"
                   - "lakeformation:*"
+                  - "lambda:*"
                 Resource:
                   - !Join [ '', ["arn:aws:s3:::*"]] 
                   - !Join [ '', ["arn:aws:glue:*:*:", "*"]]
                   - !Join [ '', ["arn:aws:lakeformation:*:*", "*"]]
                   - !Join [ '', ["arn:aws:logs:*:*:", "*"]]
-
+                  - "arn:aws:lambda:*:*:*"
   GovGlueDatabase:
     Type: AWS::Glue::Database
     Properties: 
       CatalogId: !Sub '${AWS::AccountId}'
       DatabaseInput:
         Name: !Sub '${Env}-${DeploymentRootName}-${CompId}-db-${AWS::AccountId}-${Region}'
-
   # This creates curated bucket table (so that the table can be exposed to the consumer account before the first crawl)
   GovGlueTable:
     Type: AWS::Glue::Table
@@ -297,7 +307,46 @@ Resources:
       DatabaseName: !Ref GovGlueDatabase
       TableInput:
         Name: !Join ['_', !Split ['-', !Sub "${Env}-${DeploymentRootName}-lh-s3-curated-127700773039-${Region}"]]
-
+  GovernanceWorkflow:
+    Type: AWS::Glue::Workflow
+    Properties:
+      Name: !Sub "${Env}-${DeploymentRootName}-${CompId}-governance-workflow-${AWS::AccountId}-${Region}"
+      Description: "Workflow to orchestrate data governance steps for the lakehouse S3 data lake."
+  # GlueJobRole:
+  #   Type: AWS::IAM::Role
+  #   Properties:
+  #     RoleName: !Sub "${Env}-${DeploymentRootName}-${CompId}-role-${AWS::AccountId}-${Region}"
+  #     AssumeRolePolicyDocument:
+  #       Version: 2012-10-17
+  #       Statement:
+  #         - Effect: Allow
+  #           Principal:
+  #             AWS: 
+  #               - "arn:aws:iam::127700773039:root"
+  #             Service:
+  #               - lambda.amazonaws.com
+  #           Action: 'sts:AssumeRole'
+  #     ManagedPolicyArns:
+  #       - 'arn:aws:iam::aws:policy/service-role/AWSGlueServiceRole'
+  #     Policies:
+  #       - PolicyName: !Sub '${Env}-${DeploymentRootName}-${CompId}-role-policy-${AWS::AccountId}-${Region}'
+  #         PolicyDocument:
+  #           Version: "2012-10-17"
+  #           Statement:
+  #             -
+  #               Effect: "Allow"
+  #               Action: 
+  #                 - "s3:*"
+  #                 - "glue:*"
+  #                 - "logs:*"
+  #                 - "lakeformation:*"
+  #                 - "lambda:*"
+  #               Resource:
+  #                 - "arn:aws:s3:::*"
+  #                 - "arn:aws:glue:*:*:*"
+  #                 - "arn:aws:lakeformation:*:*:*"
+  #                 - "arn:aws:logs:*:*:*"
+  #                 - "arn:aws:lambda:*:*:*"
   GovGlueCrawler:
     Type: AWS::Glue::Crawler
     Properties:
@@ -310,20 +359,26 @@ Resources:
           - 
             Path: !Sub "${Env}-${DeploymentRootName}-lh-s3-curated-127700773039-${Region}"
       Configuration: "{\"Version\":1.0,\"CrawlerOutput\":{\"Partitions\":{\"AddOrUpdateBehavior\":\"InheritFromTable\"},\"Tables\":{\"AddOrUpdateBehavior\":\"MergeNewColumns\"}}}"
-  
+  GovWorkflowTrigger:
+    Type: AWS::Glue::Trigger
+    Properties:
+      Name: !Sub "${Env}-${DeploymentRootName}-${CompId}-gov-workflow-trigger-${AWS::AccountId}-${Region}"
+      WorkflowName: !Ref GovernanceWorkflow
+      Type: "ON_DEMAND"
+      Description: "Triggers the governance catalog workflow."
+      Actions:
+        - CrawlerName: !Ref GovGlueCrawler
   LfCuratedBucketResource:
     Type: AWS::LakeFormation::Resource
     Properties: 
       ResourceArn: !Join ["", ["arn:aws:s3:::", !Sub '${Env}-${DeploymentRootName}-${CompId}-crawler-${AWS::AccountId}-${Region}']]
       RoleArn: !GetAtt LfServiceRole.Arn
       UseServiceLinkedRole: false
-
   LoggingBucket:
     Type: 'AWS::S3::Bucket'
     Properties:
       BucketName: !Sub '${Env}-${DeploymentRootName}-${CompId}-logs-${AWS::AccountId}-${Region}'
       AccessControl: LogDeliveryWrite
-
   LfBucket:
     Type: 'AWS::S3::Bucket'
     Properties:
@@ -335,7 +390,6 @@ Resources:
         ServerSideEncryptionConfiguration: 
           - ServerSideEncryptionByDefault:
               SSEAlgorithm: AES256
-
   AdminUser:
     Type: 'AWS::IAM::User'
     Properties:
@@ -380,7 +434,44 @@ Resources:
       ManagedPolicyArns:
         - 'arn:aws:iam::aws:policy/AWSLakeFormationCrossAccountManager'
         - 'arn:aws:iam::aws:policy/AmazonEC2ReadOnlyAccess'
-
+  WorkflowInitiatorPermission:
+      Type: AWS::Lambda::Permission
+      Properties: 
+        Action: lambda:InvokeFunction
+        FunctionName: !Ref WorkflowInitiator
+        Principal: 127700773039
+  WorkflowInitiator:
+    Type: AWS::Lambda::Function
+    Properties:
+      FunctionName: !Sub "${Env}-${DeploymentRootName}-${CompId}-workflow-initiator-${AWS::AccountId}-${Region}"
+      Runtime: python3.9
+      Role: !GetAtt LfServiceRole.Arn
+      Handler: !Sub "${WorkfowInitiatorFileName}.initiate_workflow"
+      Code:
+        S3Key: !Ref WorkflowInitiatorS3Location
+        S3Bucket: !Ref ResourceBucketName
+      Environment:
+        Variables: 
+          GlueWorkflowName: !Join ["396791034774", !Split  ["127700773039", !Ref GovernanceWorkflow]]
+  WorkflowStatusCheckerPermission:
+    Type: AWS::Lambda::Permission
+    Properties: 
+      Action: lambda:InvokeFunction
+      FunctionName: !Ref WorkflowStatusChecker
+      Principal: 127700773039
+  WorkflowStatusChecker:
+    Type: AWS::Lambda::Function
+    Properties:
+      FunctionName: !Sub "${Env}-${DeploymentRootName}-${CompId}-workflow-status-${AWS::AccountId}-${Region}"
+      Runtime: python3.9
+      Role: !GetAtt LfServiceRole.Arn
+      Handler: !Sub "${WorkfowInitiatorFileName}.get_workflow_state"
+      Code:
+        S3Key: !Ref WorkflowInitiatorS3Location
+        S3Bucket: !Ref ResourceBucketName
+      Environment:
+        Variables: 
+          GlueWorkflowName: !Join ["396791034774", !Split  ["127700773039", !Ref GovernanceWorkflow]]
 Outputs:
   ConsoleIAMLoginUrl:
     Description: Console IAM Login URL to try out different users

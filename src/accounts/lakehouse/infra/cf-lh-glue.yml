@@ -151,3 +151,10 @@ Resources:
         "--TempDir": !Join ['', ['s3://', !ImportValue "LH:GlueTempBucketName", '/curate']]
         "--source_bucket_uri": !Join ['', ['s3://', !ImportValue "LH:TransformedZoneBucketName"]]
         "--target_bucket_uri": !Join ['', ['s3://', !ImportValue "LH:CuratedZoneBucketName"]]
+
+Outputs:
+  ResourceBucketName:
+    Value: !Ref IngestionWorkflow
+    Export:
+      Name: !Sub "LH:IngestionWorkflowName"
+    Description: "Lake House ingestion workflow name."

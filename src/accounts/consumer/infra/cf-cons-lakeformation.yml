@@ -308,32 +308,6 @@ Resources:
         ServerSideEncryptionConfiguration: 
           - ServerSideEncryptionByDefault:
               SSEAlgorithm: AES256
-  DeveloperUser:
-    Type: 'AWS::IAM::User'
-    Properties:
-      UserName: !Sub '${Env}-${DeploymentRootName}-${CompId}-lf-developer-${AWS::AccountId}-${Region}'
-      Path: /
-      LoginProfile:
-        Password: !Ref TestUserPassword
-        PasswordResetRequired: false
-      Policies:
-        - PolicyName: LF-Athena-Query-Result-Policy
-          PolicyDocument:
-            Version: 2012-10-17
-            Statement:
-              - Effect: Allow
-                Action:
-                  - 's3:Put*'
-                  - 's3:Get*'
-                  - 's3:List*'
-                Resource:
-                  - !Join 
-                    - ''
-                    - - 'arn:aws:s3:::'
-                      - !Ref LfBucket
-                      - /athena-results/*
-      ManagedPolicyArns:
-        - 'arn:aws:iam::aws:policy/AmazonAthenaFullAccess'
   CampaignManagerUser:
     Type: 'AWS::IAM::User'
     Properties:
@@ -401,6 +375,40 @@ Resources:
         #               - 'arn:aws:glue:*:*:*'
         #               - !Ref LfBucket
         #               - /athena-results/*
+  DeveloperUser:
+    Type: 'AWS::IAM::User'
+    Properties:
+      UserName: !Sub '${Env}-${DeploymentRootName}-${CompId}-lf-developer-${AWS::AccountId}-${Region}'
+      Path: /
+      LoginProfile:
+        Password: !Ref TestUserPassword
+        PasswordResetRequired: false
+      Policies:
+        - PolicyName: LF-Athena-Query-Result-Policy
+          PolicyDocument:
+            Version: 2012-10-17
+            Statement:
+              - Effect: Allow
+                Action:
+                  - 's3:Put*'
+                  - 's3:Get*'
+                  - 's3:List*'
+                  - 'glue:Get*'
+                  - 'glue:List*'
+                  - 'glue:Search*'
+                  - 'lakeformation:List*'
+                  - 'lakeformation:Get*'
+                Resource:
+                  - 'arn:aws:glue:*:*:*'
+                  - 'arn:aws:lakeformation:*:*:*'
+                  - !Join 
+                    - ''
+                    - - 'arn:aws:s3:::'
+                      - !Ref LfBucket
+                      - /athena-results/*
+      ManagedPolicyArns:
+        - 'arn:aws:iam::aws:policy/AmazonRedshiftQueryEditor'
+        - 'arn:aws:iam::aws:policy/AmazonAthenaFullAccess'
   BusinessAnalystUser:
     Type: 'AWS::IAM::User'
     Properties:
@@ -418,6 +426,11 @@ Resources:
                   - 's3:Put*'
                   - 's3:Get*'
                   - 's3:List*'
+                  - 'glue:Get*'
+                  - 'glue:List*'
+                  - 'glue:Search*'
+                  - 'lakeformation:List*'
+                  - 'lakeformation:Get*'
                 Resource:
                   - !Join 
                     - ''
@@ -425,6 +438,7 @@ Resources:
                       - !Ref LfBucket
                       - /athena-results/*
       ManagedPolicyArns:
+        - 'arn:aws:iam::aws:policy/AmazonRedshiftQueryEditor'
         - 'arn:aws:iam::aws:policy/AmazonAthenaFullAccess'
       UserName: !Sub "${Env}-lakehouse-${CompId}-lf-business-analyst"
   

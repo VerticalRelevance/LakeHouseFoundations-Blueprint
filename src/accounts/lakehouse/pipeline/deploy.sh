@@ -6,6 +6,8 @@ set -o nounset
 # Redshift Availability Zone
 pAvailabilityZone="$1"
 
+BuildTimestamp=$(date +%s)
+
 . ./set-local-variables.sh
 
 echo "Deploying S3 stack.."
@@ -25,7 +27,25 @@ CompId="$AccountShorthand-glue"
 aws cloudformation deploy \
     --stack-name $GlueStackName \
     --template-file $GlueStackPath \
-    --parameter-overrides "CompId=$CompId"  "Env=$Env" "Region=$Region" \
+    --parameter-overrides \
+        "CompId=$CompId"\
+        "Env=$Env" "Region=$Region"\
+        "ResourceBucketName=$ResourceBucketName"\
+    --capabilities CAPABILITY_NAMED_IAM
+
+echo "Deploying orchestration stack.."
+StateMachineS3Key="$AccountShorthand-scripts/cf-lh-orch-state-machine-$BuildTimestamp.json"
+StateMachineS3Uri="$ResourceBucketURI/$StateMachineS3Key"
+aws s3 cp "../infra/cf-lh-orch-state-machine.json" $StateMachineS3Uri
+CompId="$AccountShorthand-s3"
+aws cloudformation deploy \
+    --stack-name $OrchestrationStackName \
+    --template-file $OrchestrationStackPath \
+    --parameter-overrides \
+        "CompId=$CompId"\
+        "Env=$Env" "Region=$Region"\
+        "ResourceBucketName=$ResourceBucketName"\
+        "StateMachineS3Key=$StateMachineS3Key"\
     --capabilities CAPABILITY_NAMED_IAM
 
 echo "Deploying Redshift stack.."

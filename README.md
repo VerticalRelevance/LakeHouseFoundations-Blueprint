@@ -91,6 +91,7 @@ See the following README.md doc links for futher details regarding specific acco
 
 ### LakeFormation Integration
 #### Redshift Spectrum
+- [Spectrum/S3 Minimum Permissions][]: https://docs.aws.amazon.com/redshift/latest/dg/c-spectrum-iam-policies.html#spectrum-iam-policies-minimum-permissions
 - [Spectrum/LakeFormation][]: https://docs.aws.amazon.com/redshift/latest/dg/spectrum-lake-formation.html
 - [Athena Federated Query??][]: https://github.com/awslabs/aws-athena-query-federation/blob/master/athena-example/athena-example.yaml
 - [AWS RedshiftSpectrum POC][]: https://github.com/aws-samples/aws-redshift-spectrum-poc/blob/master/cf-templates/redshift-spectrum-poc-env.template

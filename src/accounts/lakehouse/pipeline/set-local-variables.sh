@@ -9,6 +9,8 @@ export S3StackPath="../infra/cf-$AccountShorthand-s3.yml"
 export GlueStackName="$Env-$DeploymentRootName-$AccountShorthand-glue"
 export GlueStackPath="../infra/cf-$AccountShorthand-glue.yml"
 
+export OrchestrationStackName="$Env-$DeploymentRootName-$AccountShorthand-orch"
+export OrchestrationStackPath="../infra/cf-$AccountShorthand-orch.yml"
 
 export RedshiftStackName="$Env-$DeploymentRootName-$AccountShorthand-redshift"
 export RedshiftStackPath="../infra/cf-$AccountShorthand-redshift.yml"

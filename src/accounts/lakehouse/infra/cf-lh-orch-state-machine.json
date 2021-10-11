@@ -1,0 +1,95 @@
+{
+  "Comment": "A Hello World example demonstrating various state types of the Amazon States Language",
+  "StartAt": "Trigger LZ Initiator",
+  "States": {
+    "Trigger LZ Initiator": {
+      "Type": "Task",
+      "Resource": "arn:aws:states:::lambda:invoke",
+      "Parameters": {
+        "FunctionName": "arn:aws:lambda:us-east-2:396791034774:function:dev-lakehouse-lz-glue-workflow-initiator-396791034774-us-east-2",
+        "Payload": {
+          "LzGlueWorkflowName": "dev-lakehouse-lz-glue-producer-workflow-396791034774-us-east-2"
+        }
+      },
+      "Next": "Check LZ Workflow Status"
+    },
+    "Check LZ Workflow Status": {
+      "Type": "Task",
+      "Resource": "arn:aws:states:::lambda:invoke",
+      "Parameters": {
+        "FunctionName": "arn:aws:lambda:us-east-2:396791034774:function:dev-lakehouse-lz-glue-workflow-status-396791034774-us-east-2",
+        "Payload.$": "$"
+      },
+      "Next": "LZ Completion Check"
+    },
+    "LZ Completion Check": {
+      "Type": "Choice",
+      "Choices": [
+        {
+          "Variable": "$.Payload",
+          "StringMatches": "COMPLETED",
+          "Next": "Trigger LH Workflow"
+        }
+      ],
+      "Default": "LZ Wait"
+    },
+    "LZ Wait": {
+      "Type": "Wait",
+      "Seconds": 5,
+      "Next": "Check LZ Workflow Status"
+    },
+    "Trigger LH Workflow": {
+      "Type": "Task",
+      "Parameters": {
+        "Name": "dev-lakehouse-lh-glue-datalake-ingestion-workflow-127700773039-us-east-2"
+      },
+      "Resource": "arn:aws:states:::aws-sdk:glue:startWorkflowRun",
+      "Next": "Trigger Gov Initiator"
+    },
+    "Trigger Gov Initiator": {
+      "Type": "Task",
+      "Resource": "arn:aws:states:::lambda:invoke",
+      "Parameters": {
+        "FunctionName": "arn:aws:lambda:us-east-2:488653863644:function:dev-lakehouse-gov-lf-workflow-initiator-488653863644-us-east-2",
+        "Payload": {
+          "GovGlueWorkflowName": "dev-lakehouse-gov-lf-governance-workflow-488653863644-us-east-2"
+        }
+      },
+      "Next": "Check Gov Workflow Status"
+    },
+    "Check Gov Workflow Status": {
+      "Type": "Task",
+      "Resource": "arn:aws:states:::lambda:invoke",
+      "Parameters": {
+        "FunctionName": "arn:aws:lambda:us-east-2:488653863644:function:dev-lakehouse-gov-lf-workflow-status-488653863644-us-east-2",
+        "Payload.$": "$"
+      },
+      "Next": "Choice"
+    },
+    "Choice": {
+      "Type": "Choice",
+      "Choices": [
+        {
+          "Variable": "$.Payload.Status",
+          "StringEquals": "Completed",
+          "Next": "Check Gov Workflow Status End"
+        }
+      ],
+      "Default": "Gov Wait"
+    },
+    "Check Gov Workflow Status End": {
+      "Type": "Task",
+      "Resource": "arn:aws:states:::lambda:invoke",
+      "Parameters": {
+        "FunctionName": "arn:aws:lambda:us-east-2:488653863644:function:dev-lakehouse-gov-lf-workflow-status-488653863644-us-east-2",
+        "Payload.$": "$"
+      },
+      "End": true
+    },
+    "Gov Wait": {
+      "Type": "Wait",
+      "Seconds": 5,
+      "Next": "Check Gov Workflow Status"
+    }
+  }
+}

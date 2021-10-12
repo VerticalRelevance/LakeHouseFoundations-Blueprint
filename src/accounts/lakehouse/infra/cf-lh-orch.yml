@@ -35,6 +35,12 @@ Parameters:
   StateMachineS3Key:
     Description: The location of the state machine definition in S3.
     Type: String
+  WorkflowInitiatorS3Location:
+    Description: The location of the Lambda Glue Workflow Initiator script.
+    Type: String
+  WorkfowInitiatorFileName:
+    Description: The name of the file in the workflow initiator zip file.
+    Type: String
 
 Resources:
 
@@ -70,9 +76,6 @@ Resources:
                   - "sts:AssumeRole"
                   - "lambda:*"
                 Resource:
-                  - !Join [ '', ["arn:aws:s3:::*"]]
-                  - !Join [ '', ["arn:aws:glue:*:*:", "*"]]
-                  - !Join [ '', ["arn:aws:logs:*:*:", "*"]]
                   - "*"
 
   DataFlowOrchestrator:
@@ -92,5 +95,24 @@ Resources:
         GovGlueInitiatorArn: !Sub "arn:aws:lambda:${Region}:488653863644:function:${Env}-${DeploymentRootName}-gov-lf-workflow-initiator-488653863644-${Region}"
         GovGlueStatusCheckerArn: !Sub "arn:aws:lambda:${Region}:488653863644:function:${Env}-${DeploymentRootName}-gov-lf-workflow-status-488653863644-${Region}"
         GovGlueWorkflowName: !Sub "${Env}-${DeploymentRootName}-gov-lf-governance-workflow-488653863644-${Region}"
+  # WorkflowInitiatorPermission:
+  #   Type: AWS::Lambda::Permission
+  #   Properties: 
+  #     Action: lambda:InvokeFunction
+  #     FunctionName: !Ref WorkflowInitiator
+  #     Principal: 127700773039
+  WorkflowInitiator:
+    Type: AWS::Lambda::Function
+    Properties:
+      FunctionName: !Sub "${Env}-${DeploymentRootName}-${CompId}-workflow-initiator-${AWS::AccountId}-${Region}"
+      Runtime: python3.9
+      Role: !GetAtt DataFlowOrchestrationRole.Arn
+      Handler: !Sub "${WorkfowInitiatorFileName}.initiate_workflow"
+      Code:
+        S3Key: !Ref WorkflowInitiatorS3Location
+        S3Bucket: !Ref ResourceBucketName
+      Environment:
+        Variables: 
+          GlueWorkflowName: !ImportValue "LH:IngestionWorkflowName"
 
   

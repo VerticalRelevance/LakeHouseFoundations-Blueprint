@@ -27,8 +27,8 @@ CompId="$AccountShorthand-glue"
 aws cloudformation deploy \
     --stack-name $GlueStackName \
     --template-file $GlueStackPath \
+    --capabilities CAPABILITY_NAMED_IAM
     --parameter-overrides "CompId=$CompId" "Env=$Env" "Region=$Region" \
         "ResourceBucketName=$ResourceBucketName" \
         "WorkflowInitiatorS3Location=$WorkflowInitiatorS3Location" \
         "WorkfowInitiatorFileName=$WorkflowInitiatorFileName" \
-    --capabilities CAPABILITY_NAMED_IAM

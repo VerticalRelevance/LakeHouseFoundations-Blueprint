@@ -1,8 +1,26 @@
 {
   "Comment": "A Hello World example demonstrating various state types of the Amazon States Language",
-  "StartAt": "Trigger LZ Initiator",
+  "StartAt": "Trigger LZ Workflow",
   "States": {
-    "Trigger LZ Initiator": {
+    "Wait Success": {
+      "Type": "Wait",
+      "Seconds": 1,
+      "Next": "Success"
+    },
+    "Wait Fail": {
+      "Type": "Wait",
+      "Seconds": 1,
+      "Next": "Fail"
+    },
+    "Success": {
+      "Type": "Fail",
+      "Cause": "Workflow run completed successfully."
+    },
+    "Fail": {
+      "Type": "Fail",
+      "Cause": "Workflow state not supported. Fail."
+    },
+    "Trigger LZ Workflow": {
       "Type": "Task",
       "Resource": "arn:aws:states:::lambda:invoke",
       "Parameters": {
@@ -11,13 +29,13 @@
           "LzGlueWorkflowName": "dev-lakehouse-lz-glue-producer-workflow-396791034774-us-east-2"
         }
       },
-      "Next": "Check LZ Workflow Status"
+      "Next": "Get LZ Status"
     },
-    "Check LZ Workflow Status": {
+    "Get LZ Status": {
       "Type": "Task",
       "Resource": "arn:aws:states:::lambda:invoke",
       "Parameters": {
-        "FunctionName": "arn:aws:lambda:us-east-2:396791034774:function:dev-lakehouse-lz-glue-workflow-status-396791034774-us-east-2",
+        "FunctionName": "arn:aws:lambda:us-east-2:396791034774:function:dev-lakehouse-lz-glue-workflow-initiator-396791034774-us-east-2",
         "Payload.$": "$"
       },
       "Next": "LZ Completion Check"
@@ -26,27 +44,65 @@
       "Type": "Choice",
       "Choices": [
         {
-          "Variable": "$.Payload",
-          "StringMatches": "COMPLETED",
+          "Variable": "$.Payload.statusCode",
+          "NumericEquals": 202,
+          "Next": "Wait LZ"
+        },
+        {
+          "Variable": "$.Payload.statusCode",
+          "NumericEquals": 200,
           "Next": "Trigger LH Workflow"
         }
       ],
-      "Default": "LZ Wait"
+      "Default": "Wait Fail"
     },
-    "LZ Wait": {
+    "Wait LZ": {
       "Type": "Wait",
-      "Seconds": 5,
-      "Next": "Check LZ Workflow Status"
+      "Seconds": 10,
+      "Next": "Get LZ Status"
     },
     "Trigger LH Workflow": {
       "Type": "Task",
+      "Resource": "arn:aws:states:::lambda:invoke",
       "Parameters": {
-        "Name": "dev-lakehouse-lh-glue-datalake-ingestion-workflow-127700773039-us-east-2"
+        "FunctionName": "arn:aws:lambda:us-east-2:396791034774:function:dev-lakehouse-lh-glue-workflow-initiator-127700773039-us-east-2",
+        "Payload": {
+          "LhGlueWorkflowName": "dev-lakehouse-lh-glue-datalake-ingestion-workflow-127700773039-us-east-2"
+        }
       },
-      "Resource": "arn:aws:states:::aws-sdk:glue:startWorkflowRun",
-      "Next": "Trigger Gov Initiator"
+      "Next": "Get LH Status"
     },
-    "Trigger Gov Initiator": {
+    "Get LH Status": {
+      "Type": "Task",
+      "Resource": "arn:aws:states:::lambda:invoke",
+      "Parameters": {
+        "FunctionName": "arn:aws:lambda:us-east-2:396791034774:function:dev-lakehouse-lh-glue-workflow-initiator-127700773039-us-east-2",
+        "Payload.$": "$"
+      },
+      "Next": "LH Completion Check"
+    },
+    "LH Completion Check": {
+      "Type": "Choice",
+      "Choices": [
+        {
+          "Variable": "$.Payload.statusCode",
+          "NumericEquals": 202,
+          "Next": "Wait LH"
+        },
+        {
+          "Variable": "$.Payload.statusCode",
+          "NumericEquals": 200,
+          "Next": "Trigger Gov Workflow"
+        }
+      ],
+      "Default": "Wait Fail"
+    },
+    "Wait LH": {
+      "Type": "Wait",
+      "Seconds": 10,
+      "Next": "Get LH Status"
+    },
+    "Trigger Gov Workflow": {
       "Type": "Task",
       "Resource": "arn:aws:states:::lambda:invoke",
       "Parameters": {
@@ -55,41 +111,37 @@
           "GovGlueWorkflowName": "dev-lakehouse-gov-lf-governance-workflow-488653863644-us-east-2"
         }
       },
-      "Next": "Check Gov Workflow Status"
+      "Next": "Get Gov Status"
     },
-    "Check Gov Workflow Status": {
+    "Get Gov Status": {
       "Type": "Task",
       "Resource": "arn:aws:states:::lambda:invoke",
       "Parameters": {
-        "FunctionName": "arn:aws:lambda:us-east-2:488653863644:function:dev-lakehouse-gov-lf-workflow-status-488653863644-us-east-2",
+        "FunctionName": "arn:aws:lambda:us-east-2:396791034774:function:dev-lakehouse-gov-lf-workflow-initiator-127700773039-us-east-2",
         "Payload.$": "$"
       },
-      "Next": "Choice"
+      "Next": "Gov Completion Check"
     },
-    "Choice": {
+    "Gov Completion Check": {
       "Type": "Choice",
       "Choices": [
         {
-          "Variable": "$.Payload.Status",
-          "StringEquals": "Completed",
-          "Next": "Check Gov Workflow Status End"
+          "Variable": "$.Payload.statusCode",
+          "NumericEquals": 202,
+          "Next": "Wait Gov"
+        },
+        {
+          "Variable": "$.Payload.statusCode",
+          "NumericEquals": 200,
+          "Next": "Wait Success"
         }
       ],
-      "Default": "Gov Wait"
+      "Default": "Wait Fail"
     },
-    "Check Gov Workflow Status End": {
-      "Type": "Task",
-      "Resource": "arn:aws:states:::lambda:invoke",
-      "Parameters": {
-        "FunctionName": "arn:aws:lambda:us-east-2:488653863644:function:dev-lakehouse-gov-lf-workflow-status-488653863644-us-east-2",
-        "Payload.$": "$"
-      },
-      "End": true
-    },
-    "Gov Wait": {
+    "Wait Gov": {
       "Type": "Wait",
-      "Seconds": 5,
-      "Next": "Check Gov Workflow Status"
+      "Seconds": 10,
+      "Next": "Get Gov Status"
     }
   }
 }

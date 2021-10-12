@@ -29,6 +29,9 @@ Parameters:
     AllowedValues:
       - us-east-2
       - us-east-1
+  ResourceBucketName:
+    Description: The name of the deployment resource bucket.
+    Type: String
 
 Resources:
   IngestionWorkflow:
@@ -48,6 +51,8 @@ Resources:
               Service:
                 - glue.amazonaws.com
                 - lakeformation.amazonaws.com
+                - states.amazonaws.com
+                - lambda.amazonaws.com
             Action: 'sts:AssumeRole'
       ManagedPolicyArns:
         - 'arn:aws:iam::aws:policy/service-role/AWSGlueServiceRole'
@@ -63,11 +68,13 @@ Resources:
                   - "glue:*"
                   - "logs:*"
                   - "lakeformation:*"
+                  - "lambda:*"
                 Resource:
                   - !Join [ '', ["arn:aws:s3:::*"]]
                   - !Join [ '', ["arn:aws:glue:*:*:", "*"]]
                   - !Join [ '', ["arn:aws:lakeformation:*:*", "*"]]
                   - !Join [ '', ["arn:aws:logs:*:*:", "*"]]
+                  - "arn:aws:lambda:*:*:*"
   RawToTransformedJobTrigger:
     Type: AWS::Glue::Trigger
     Properties:
@@ -153,7 +160,7 @@ Resources:
         "--target_bucket_uri": !Join ['', ['s3://', !ImportValue "LH:CuratedZoneBucketName"]]
 
 Outputs:
-  ResourceBucketName:
+  IngestionWorkflowName:
     Value: !Ref IngestionWorkflow
     Export:
       Name: !Sub "LH:IngestionWorkflowName"

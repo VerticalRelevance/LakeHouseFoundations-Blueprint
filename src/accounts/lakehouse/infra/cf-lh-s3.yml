@@ -152,6 +152,7 @@ Resources:
               Service:
                 - glue.amazonaws.com
                 - lakeformation.amazonaws.com
+                - athena.amazonaws.com
 
 Outputs:
   GlueStudioProcessingBucketName:

@@ -42,7 +42,6 @@ aws cloudformation deploy \
     --capabilities CAPABILITY_NAMED_IAM
 
 echo "Deploying orchestration stack.."
-CompId="$AccountShorthand-s3"
 StateMachineS3Key="$AccountShorthand-scripts/cf-lh-orch-state-machine-$BuildTimestamp.json"
 StateMachineS3Uri="$ResourceBucketURI/$StateMachineS3Key"
 aws s3 cp "../infra/cf-lh-orch-state-machine.json" $StateMachineS3Uri

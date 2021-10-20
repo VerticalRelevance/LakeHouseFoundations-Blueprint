@@ -209,6 +209,7 @@ Resources:
                 - lakeformation.amazonaws.com
                 - firehose.amazonaws.com
                 - lambda.amazonaws.com
+                - states.amazonaws.com
             Action: 'sts:AssumeRole'
       ManagedPolicyArns:
         - 'arn:aws:iam::aws:policy/service-role/AWSGlueServiceRole'
@@ -452,26 +453,7 @@ Resources:
         S3Bucket: !Ref ResourceBucketName
       Environment:
         Variables: 
-          GlueWorkflowName: !Join ["396791034774", !Split  ["127700773039", !Ref GovernanceWorkflow]]
-  WorkflowStatusCheckerPermission:
-    Type: AWS::Lambda::Permission
-    Properties: 
-      Action: lambda:InvokeFunction
-      FunctionName: !Ref WorkflowStatusChecker
-      Principal: 127700773039
-  WorkflowStatusChecker:
-    Type: AWS::Lambda::Function
-    Properties:
-      FunctionName: !Sub "${Env}-${DeploymentRootName}-${CompId}-workflow-status-${AWS::AccountId}-${Region}"
-      Runtime: python3.9
-      Role: !GetAtt LfServiceRole.Arn
-      Handler: !Sub "${WorkfowInitiatorFileName}.get_workflow_state"
-      Code:
-        S3Key: !Ref WorkflowInitiatorS3Location
-        S3Bucket: !Ref ResourceBucketName
-      Environment:
-        Variables: 
-          GlueWorkflowName: !Join ["396791034774", !Split  ["127700773039", !Ref GovernanceWorkflow]]
+          GovGlueWorkflowName: !Join ["396791034774", !Split  ["127700773039", !Ref GovernanceWorkflow]]
 Outputs:
   ConsoleIAMLoginUrl:
     Description: Console IAM Login URL to try out different users

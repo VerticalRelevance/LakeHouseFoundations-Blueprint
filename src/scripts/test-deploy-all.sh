@@ -133,10 +133,5 @@ cd ../../../scripts
 ### Now here are manual steps end-to-end
 # Upload sample json to s3
 
-# Run LZ Workflow
-
-# Run LH Workflow
-
-# Run Gov Crawler
 
 

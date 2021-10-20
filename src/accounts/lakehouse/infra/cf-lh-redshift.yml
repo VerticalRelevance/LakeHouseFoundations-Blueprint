@@ -373,12 +373,6 @@ Resources:
           FromPort: 3389
           ToPort: 3389
           CidrIp: !Ref pInboundTraffic
-  rRedshiftClusterSubnetGroup:
-    Type: 'AWS::Redshift::ClusterSubnetGroup'
-    Properties:
-      Description: Cluster subnet group
-      SubnetIds:
-        - !Ref rPrivateAnalyticsSubnet
   rRedshiftSecurityGroup:
     Type: 'AWS::EC2::SecurityGroup'
     Properties:
@@ -389,6 +383,12 @@ Resources:
           ToPort: !Ref pDBPortNumber
           SourceSecurityGroupId: !Ref rBastionHostSecurityGroup
       VpcId: !Ref rPoCVPC
+  rRedshiftClusterSubnetGroup:
+    Type: 'AWS::Redshift::ClusterSubnetGroup'
+    Properties:
+      Description: Cluster subnet group
+      SubnetIds:
+        - !Ref rPrivateAnalyticsSubnet
 Outputs:
   ClusterEndpoint:
     Description: Cluster endpoint

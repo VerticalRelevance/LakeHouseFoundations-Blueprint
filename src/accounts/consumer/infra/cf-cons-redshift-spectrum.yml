@@ -191,7 +191,7 @@ Parameters:
       cluster that is being created.
     Type: String
     NoEcho: 'true'
-    Default: 'Password1!'
+    # Default: 'Password1!'
     MinLength: 8
     MaxLength: 64
   pInboundTraffic:
@@ -323,6 +323,12 @@ Resources:
         - 'Fn::GetAtt':
             - rRedshiftSpectrumRole
             - Arn
+        - 'Fn::GetAtt':
+            - rRedshiftSpectrumRole2
+            - Arn
+        - 'Fn::GetAtt':
+            - rRedshiftSpectrumRole3
+            - Arn
   rRedshiftSpectrumRole:
     Type: 'AWS::IAM::Role'
     Properties:
@@ -365,6 +371,56 @@ Resources:
                   # - !Sub 'arn:aws:s3:::${pS3BucketName}/*'
                   # - !Sub 'arn:aws:lakeformation:${Region}:${AWS::AccountId}:*'
                   # - !Sub 'arn:aws:glue:${Region}:${AWS::AccountId}:*'
+  rRedshiftSpectrumRole2:
+    Type: 'AWS::IAM::Role'
+    Properties:
+      RoleName: !Sub '${Env}-${DeploymentRootName}-${CompId}-redshift-dev-${AWS::AccountId}-${Region}'
+      AssumeRolePolicyDocument:
+        Version: 2012-10-17
+        Statement:
+          - Effect: Allow
+            Principal:
+              Service: redshift.amazonaws.com
+            Action: 'sts:AssumeRole'
+      Path: /
+      Policies:
+        - PolicyName: spectrum-required-access
+          PolicyDocument:
+            Version: 2012-10-17
+            Statement:
+              - Effect: Allow
+                Action:
+                  - 's3:*'
+                  - 'glue:*'
+                  - 'lakeformation:*'
+                  - 'redshift:*'
+                Resource:
+                  - '*'
+  rRedshiftSpectrumRole3:
+    Type: 'AWS::IAM::Role'
+    Properties:
+      RoleName: !Sub '${Env}-${DeploymentRootName}-${CompId}-redshift-analyst-${AWS::AccountId}-${Region}'
+      AssumeRolePolicyDocument:
+        Version: 2012-10-17
+        Statement:
+          - Effect: Allow
+            Principal:
+              Service: redshift.amazonaws.com
+            Action: 'sts:AssumeRole'
+      Path: /
+      Policies:
+        - PolicyName: spectrum-required-access
+          PolicyDocument:
+            Version: 2012-10-17
+            Statement:
+              - Effect: Allow
+                Action:
+                  - 's3:*'
+                  - 'glue:*'
+                  - 'lakeformation:*'
+                  - 'redshift:*'
+                Resource:
+                  - '*'
   rBastionHostSecurityGroup:
     Type: 'AWS::EC2::SecurityGroup'
     Properties:

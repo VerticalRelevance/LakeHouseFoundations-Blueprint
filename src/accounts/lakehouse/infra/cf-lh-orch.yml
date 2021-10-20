@@ -95,12 +95,15 @@ Resources:
         GovGlueInitiatorArn: !Sub "arn:aws:lambda:${Region}:488653863644:function:${Env}-${DeploymentRootName}-gov-lf-workflow-initiator-488653863644-${Region}"
         GovGlueStatusCheckerArn: !Sub "arn:aws:lambda:${Region}:488653863644:function:${Env}-${DeploymentRootName}-gov-lf-workflow-status-488653863644-${Region}"
         GovGlueWorkflowName: !Sub "${Env}-${DeploymentRootName}-gov-lf-governance-workflow-488653863644-${Region}"
-  # WorkflowInitiatorPermission:
-  #   Type: AWS::Lambda::Permission
-  #   Properties: 
-  #     Action: lambda:InvokeFunction
-  #     FunctionName: !Ref WorkflowInitiator
-  #     Principal: 127700773039
+  WorkflowInitiatorPermission:
+    Type: AWS::Lambda::Permission
+    Properties: 
+      Action: lambda:InvokeFunction
+      FunctionName: !Ref WorkflowInitiator
+      Principal: states.amazonaws.com
+      SourceAccount: !Ref 'AWS::AccountId'
+      SourceArn: !GetAtt DataFlowOrchestrationRole.Arn
+
   WorkflowInitiator:
     Type: AWS::Lambda::Function
     Properties:

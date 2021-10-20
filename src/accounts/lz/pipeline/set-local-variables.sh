@@ -8,4 +8,7 @@ export S3StackPath="../infra/cf-$AccountShorthand-s3.yml"
 
 export GlueStackName="$Env-$DeploymentRootName-$AccountShorthand-glue"
 export GlueStackPath="../infra/cf-$AccountShorthand-glue.yml"
+
+export RdsStackName="$Env-$DeploymentRootName-$AccountShorthand-rds-postgres"
+export RdsStackPath="../infra/cf-$AccountShorthand-rds-postgres.yml"
 echo "End setting variables."

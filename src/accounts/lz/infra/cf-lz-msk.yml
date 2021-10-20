@@ -303,6 +303,7 @@ Resources:
       SubnetId: 
         Fn::ImportValue: 
           !Sub "${ProjectName}:PrivateSubnet2"
+          
   ECSCluster:
     Type: AWS::ECS::Cluster
     Properties:

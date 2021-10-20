@@ -7,14 +7,13 @@
       "Seconds": 1,
       "Next": "Success"
     },
+    "Success": {
+      "Type": "Succeed"
+    },
     "Wait Fail": {
       "Type": "Wait",
       "Seconds": 1,
       "Next": "Fail"
-    },
-    "Success": {
-      "Type": "Fail",
-      "Cause": "Workflow run completed successfully."
     },
     "Fail": {
       "Type": "Fail",
@@ -65,7 +64,7 @@
       "Type": "Task",
       "Resource": "arn:aws:states:::lambda:invoke",
       "Parameters": {
-        "FunctionName": "arn:aws:lambda:us-east-2:396791034774:function:dev-lakehouse-lh-glue-workflow-initiator-127700773039-us-east-2",
+        "FunctionName": "arn:aws:lambda:us-east-2:127700773039:function:dev-lakehouse-lh-orch-workflow-initiator-127700773039-us-east-2",
         "Payload": {
           "LhGlueWorkflowName": "dev-lakehouse-lh-glue-datalake-ingestion-workflow-127700773039-us-east-2"
         }
@@ -76,7 +75,7 @@
       "Type": "Task",
       "Resource": "arn:aws:states:::lambda:invoke",
       "Parameters": {
-        "FunctionName": "arn:aws:lambda:us-east-2:396791034774:function:dev-lakehouse-lh-glue-workflow-initiator-127700773039-us-east-2",
+        "FunctionName": "arn:aws:lambda:us-east-2:127700773039:function:dev-lakehouse-lh-orch-workflow-initiator-127700773039-us-east-2",
         "Payload.$": "$"
       },
       "Next": "LH Completion Check"
@@ -117,7 +116,7 @@
       "Type": "Task",
       "Resource": "arn:aws:states:::lambda:invoke",
       "Parameters": {
-        "FunctionName": "arn:aws:lambda:us-east-2:396791034774:function:dev-lakehouse-gov-lf-workflow-initiator-127700773039-us-east-2",
+        "FunctionName": "arn:aws:lambda:us-east-2:488653863644:function:dev-lakehouse-gov-lf-workflow-initiator-488653863644-us-east-2",
         "Payload.$": "$"
       },
       "Next": "Gov Completion Check"

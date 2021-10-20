@@ -401,11 +401,7 @@ Resources:
                 Resource:
                   - 'arn:aws:glue:*:*:*'
                   - 'arn:aws:lakeformation:*:*:*'
-                  - !Join 
-                    - ''
-                    - - 'arn:aws:s3:::'
-                      - !Ref LfBucket
-                      - /athena-results/*
+                  - 'arn:aws:s3:::*'
       ManagedPolicyArns:
         - 'arn:aws:iam::aws:policy/AmazonRedshiftQueryEditor'
         - 'arn:aws:iam::aws:policy/AmazonAthenaFullAccess'
@@ -432,11 +428,8 @@ Resources:
                   - 'lakeformation:List*'
                   - 'lakeformation:Get*'
                 Resource:
-                  - !Join 
-                    - ''
-                    - - 'arn:aws:s3:::'
-                      - !Ref LfBucket
-                      - /athena-results/*
+                  - 'arn:aws:s3:::*'
+
       ManagedPolicyArns:
         - 'arn:aws:iam::aws:policy/AmazonRedshiftQueryEditor'
         - 'arn:aws:iam::aws:policy/AmazonAthenaFullAccess'

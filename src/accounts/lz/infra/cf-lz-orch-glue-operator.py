@@ -1,5 +1,3 @@
-
-
 import json
 import os
 
@@ -13,7 +11,6 @@ logger.setLevel(logging.INFO)
 # Import Boto 3 for AWS Glue
 import boto3
 glueClient = boto3.client('glue')
-
 
 # Define Lambda function
 def initiate_workflow(event, context):

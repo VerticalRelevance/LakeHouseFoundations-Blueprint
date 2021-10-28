@@ -28,28 +28,33 @@ WorkflowInitiatorS3Location="$AccountShorthand-scripts/$WorkflowInitiatorZipFile
 aws s3 cp "$WorkflowInitiatorZipFileName" "$ResourceBucketURI/$WorkflowInitiatorS3Location"
 echo "Resource files synced to S3 resource bucket."
 
-echo "Deploying Glue stack.."
-CompId="$AccountShorthand-glue"
-aws cloudformation deploy \
-    --stack-name $GlueStackName \
-    --template-file $GlueStackPath \
-    --capabilities CAPABILITY_NAMED_IAM
-    --parameter-overrides "CompId=$CompId" "Env=$Env" "Region=$Region" \
-        "ResourceBucketName=$ResourceBucketName" \
-        "WorkflowInitiatorS3Location=$WorkflowInitiatorS3Location" \
-        "WorkfowInitiatorFileName=$WorkflowInitiatorFileName" 
-
 echo "Deploying RDS Postgres.."
 # ! Do not create key pair here. This is for the reference architecture automation. Replace KeyPairName with name of predefined key pair.
 KeyPairName="$Env-$DeploymentRootName-$CompId-postgres-bastion-keypair"
 aws ec2 create-key-pair --key-name "$KeyPairName"
 CompId="$AccountShorthand-rds"
+RDSUsername="dbUser"
 aws cloudformation deploy \
     --stack-name $RdsStackName \
     --template-file $RdsStackPath \
     --capabilities CAPABILITY_NAMED_IAM \
     --parameter-overrides "CompId=$CompId" "Env=$Env" "Region=$Region" \
-        "pDBUsername=admin" \
-        "pDBPassword=$PostgresqlPassword" \
+        "DBUsername=$RDSUsername" \
+        "DBPassword=$PostgresqlPassword" \
         "ResourceBucketName=$ResourceBucketName" \
         "pBastionHostEC2KeyPair=$KeyPairName"
+
+echo "Deploying Glue stack.."
+CompId="$AccountShorthand-glue"
+aws cloudformation deploy \
+    --stack-name $GlueStackName \
+    --template-file $GlueStackPath \
+    --capabilities CAPABILITY_NAMED_IAM \
+    --parameter-overrides "CompId=$CompId" "Env=$Env" "Region=$Region" \
+        "ResourceBucketName=$ResourceBucketName" \
+        "WorkflowInitiatorS3Location=$WorkflowInitiatorS3Location" \
+        "WorkfowInitiatorFileName=$WorkflowInitiatorFileName" \
+        "RDSUsername=$RDSUsername" \
+        "RDSPassword=$PostgresqlPassword"
+
+

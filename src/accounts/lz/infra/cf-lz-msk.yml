@@ -11,12 +11,10 @@ Metadata:
             - KeyPair
 
 Parameters:
-
   CompId:
     Description: This templates' component identifier string
     Type: String
     Default: consumer-lakeformation
-
   Env:
     Description: The environment in which the account is being deployed.
     Type: String
@@ -25,32 +23,26 @@ Parameters:
       - dev
       - qa
       - prod
-  
   ProjectName:
     Type: String
     Description: Project name to link stacks
     Default: VR-LakeHouse-Ref-Arch
-
   VpcCIDR:
     Description: Please enter the IP range (CIDR notation) for this VPC
     Type: String
     Default: 10.14.0.0/16
-
   PublicSubnet1CIDR:
     Description: Please enter the IP range (CIDR notation) for the public subnet in the first Availability Zone
     Type: String
     Default: 10.14.0.0/19
-
   PublicSubnet2CIDR:
     Description: Please enter the IP range (CIDR notation) for the public subnet in the second Availability Zone
     Type: String
     Default: 10.14.32.0/19
-
   PrivateSubnet1CIDR:
     Description: Please enter the IP range (CIDR notation) for the private subnet in the first Availability Zone
     Type: String
     Default: 10.14.64.0/19
-
   PrivateSubnet2CIDR:
     Description: Please enter the IP range (CIDR notation) for the private subnet in the second Availability Zone
     Type: String
@@ -303,7 +295,7 @@ Resources:
       SubnetId: 
         Fn::ImportValue: 
           !Sub "${ProjectName}:PrivateSubnet2"
-          
+
   ECSCluster:
     Type: AWS::ECS::Cluster
     Properties:

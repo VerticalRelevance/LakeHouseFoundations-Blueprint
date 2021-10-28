@@ -38,7 +38,17 @@ Parameters:
   WorkfowInitiatorFileName:
     Description: The name of the file in the workflow initiator zip file.
     Type: String
-
+  RDSUsername:
+    Description: "The username of the provisioned RDS instance"
+    Type: String
+  RDSPassword:
+    Description: >-
+      The password that is associated with the master user account for the
+      cluster that is being created.
+    Type: String
+    NoEcho: 'true'
+    MinLength: 8
+    MaxLength: 64
 Resources:
   ProducerWorkflow:
     Type: AWS::Glue::Workflow
@@ -104,12 +114,14 @@ Resources:
                   - "logs:*"
                   - "lakeformation:*"
                   - "lambda:*"
+                  - "rds:*"
                 Resource:
                   - "arn:aws:s3:::*"
                   - "arn:aws:glue:*:*:*"
                   - "arn:aws:lakeformation:*:*:*"
                   - "arn:aws:logs:*:*:*"
                   - "arn:aws:lambda:*:*:*"
+                  - "arn:aws:rds:*:*:*"
   PostDataJobTrigger:
     Type: AWS::Glue::Trigger
     Properties:
@@ -230,3 +242,22 @@ Resources:
       Environment:
         Variables: 
           GlueWorkflowName: !Join [ "396791034774", !Split  ["127700773039", !Ref ProducerWorkflow]]
+  RDSConnection:
+    Type: AWS::Glue::Connection
+    Properties: 
+      CatalogId: !Sub "${AWS::AccountId}"
+      ConnectionInput:
+        Name: !Sub "${Env}-${DeploymentRootName}-${CompId}-rds-connection-${AWS::AccountId}-${Region}"
+        Description: Connection to the RDS hr data source.
+        ConnectionType: JDBC
+        PhysicalConnectionRequirements:
+          AvailabilityZone: !Select [0, !GetAZs ""]
+          SecurityGroupIdList:
+            - !ImportValue "LZ:RDSSecurityGroup"
+          Subnet:
+            - 
+        ConnectionProperties:
+          "JDBC_CONNECTION_URL": !Join ['', ["jdbc:postgresql:", !ImportValue "LZ:RDSClusterEndpoint", ":", !ImportValue "LZ:RDSClusterPort", "employees"]] 
+          "JDBC_USERNAME": !Ref RDSUsername
+          "JDBC_PASSWORD": !Ref RDSPassword
+    

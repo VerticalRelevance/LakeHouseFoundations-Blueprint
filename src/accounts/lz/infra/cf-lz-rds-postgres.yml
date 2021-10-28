@@ -69,13 +69,12 @@ Parameters:
       cluster that is being created.
     Type: String
     NoEcho: 'true'
-    Default: 'Password1!'
     MinLength: 8
     MaxLength: 64
   DBPortNumber:
     Description: The port number on which the cluster accepts incoming connections.
-    Type: Number
-    Default: '5432'
+    Type: String
+    Default: 5432
 Resources:
   PostgresDBRole:
     Type: AWS::IAM::Role
@@ -91,8 +90,6 @@ Resources:
                 - glue.amazonaws.com
                 - athena.amazonaws.com
             Action: 'sts:AssumeRole'
-      # ManagedPolicyArns:
-      #   - 'arn:aws:iam::396791034774:role/aws-service-role/rds.amazonaws.com/AWSServiceRoleForRDS'
       Policies:
         - PolicyName: !Sub '${Env}-${DeploymentRootName}-${CompId}-role-policy-${AWS::AccountId}-${Region}'
           PolicyDocument:
@@ -110,6 +107,114 @@ Resources:
                   - "arn:aws:rds:*:*:*"
                   - "arn:aws:logs:*:*:*"
                   - "arn:aws:lambda:*:*:*"
+  VPC:
+    Type: AWS::EC2::VPC
+    Properties:
+      CidrBlock: !Ref VpcCIDR
+      EnableDnsHostnames: true
+      Tags:
+        - Key: Name
+          Value: !Sub '${Env}-${DeploymentRootName}-${CompId}-vpc-${AWS::AccountId}-${Region}'
+  RDSCluster: 
+    Type: "AWS::RDS::DBCluster"
+    Properties: 
+      # DBClusterParameterGroupName: !Ref RDSDBClusterParameterGroup
+      DBSubnetGroupName: !Ref DBSubnetGroup
+      Engine: aurora-postgresql
+      EngineMode: serverless
+      EnableHttpEndpoint: true
+      MasterUserPassword: !Ref DBPassword
+      MasterUsername: !Ref DBUsername
+  DBSubnetGroup: 
+    Type: "AWS::RDS::DBSubnetGroup"
+    Properties: 
+      DBSubnetGroupDescription: The subnet group for the example RDS data source.
+      SubnetIds: 
+        - !Ref PrivateSubnet1
+        - !Ref PrivateSubnet2
+      Tags: 
+        - 
+          Key: Name
+          Value: !Sub '${Env}-${DeploymentRootName}-${CompId}-db-subnet-group-${AWS::AccountId}-${Region}'
+  RDSBastionHostSecurityGroup:
+    Type: 'AWS::EC2::SecurityGroup'
+    Properties:
+      GroupDescription: allow connections from specified CIDR ranges
+      VpcId: !Ref VPC
+      SecurityGroupIngress:
+        - IpProtocol: tcp
+          FromPort: !Ref DBPortNumber
+          ToPort: !Ref DBPortNumber
+          CidrIp: !Ref InboundTraffic
+      Tags:
+        - Key: Name
+          Value: RDSBastionHostSG
+  RDSSecurityGroup:
+    Type: 'AWS::EC2::SecurityGroup'
+    Properties:
+      GroupDescription: Security group
+      SecurityGroupIngress:
+        - IpProtocol: tcp
+          FromPort: !Ref DBPortNumber
+          ToPort: !Ref DBPortNumber
+          SourceSecurityGroupId: !Ref BastionHostSecurityGroup
+      VpcId: !Ref VPC
+  PrivateSubnet1:
+    Type: AWS::EC2::Subnet
+    Properties:
+      VpcId: !Ref VPC
+      AvailabilityZone: !Select [0, !GetAZs ""]
+      CidrBlock: !Ref PrivateSubnet1CIDR
+      MapPublicIpOnLaunch: false
+      Tags:
+        - Key: Name
+          Value: !Sub '${Env}-${DeploymentRootName}-${CompId}-private-subnet-${AWS::AccountId}-${Region}'
+  PrivateSubnet2:
+    Type: AWS::EC2::Subnet
+    Properties:
+      VpcId: !Ref VPC
+      AvailabilityZone: !Select [1, !GetAZs ""]
+      CidrBlock: !Ref PrivateSubnet2CIDR
+      MapPublicIpOnLaunch: false
+      Tags:
+        - Key: Name
+          Value: !Sub '${Env}-${DeploymentRootName}-${CompId}-private-subnet2-${AWS::AccountId}-${Region}'
+  PrivateRouteTable1:
+    Type: AWS::EC2::RouteTable
+    Properties:
+      VpcId: !Ref VPC
+      Tags:
+        - Key: Name
+          Value: !Sub '${Env}-${DeploymentRootName}-${CompId}-private-routes-${AWS::AccountId}-${Region}'
+  PrivateSubnet1RouteTableAssociation:
+    Type: AWS::EC2::SubnetRouteTableAssociation
+    Properties:
+      RouteTableId: !Ref PrivateRouteTable1
+      SubnetId: !Ref PrivateSubnet1
+Outputs:
+  RDSConnectionEndpoint:
+    Value: !GetAtt RDSCluster.Endpoint.Address
+    Export:
+      Name: !Sub "LZ:RDSClusterEndpoint"
+    Description: "The endpoint to the provisioned RDS cluster."
+  RDSConnectionPort:
+    Value: !GetAtt RDSCluster.Endpoint.Port
+    Export:
+      Name: !Sub "LZ:RDSClusterPort"
+    Description: "The port to the provisioned RDS cluster."
+  RDSSecurityGroup:
+    Value: !Ref RDSSecurityGroup
+    Export:
+      Name: !Sub "LZ:RDSSecurityGroup"
+
+
+  # RDSDBClusterParameterGroup: 
+  #   Type: "AWS::RDS::DBClusterParameterGroup"
+  #   Properties: 
+  #     Description: "CloudFormation Sample Aurora Cluster Parameter Group"
+  #     Family: aurora-postgresql10 # aurora5.6
+  #     Parameters: 
+  #       time_zone: US/Eastern
   # PostgresDB:
   #   Type: 'AWS::RDS::DBInstance'
   #   Properties:
@@ -126,30 +231,6 @@ Resources:
   #     # MonitoringRoleArn: !GetAtt PostgresDBRole.Arn
   #     VPCSecurityGroups: 
   #       - !GetAtt RDSSecurityGroup.GroupId
-
-  ###
-  # Begin Aurora Cluseter
-  RDSCluster: 
-    Properties: 
-      DBClusterParameterGroupName: 
-        Ref: RDSDBClusterParameterGroup
-      DBSubnetGroupName: 
-        Ref: DBSubnetGroup
-      Engine: aurora
-      EngineMode: serverless
-      EnableHttpEndpoint: true
-      MasterUserPassword: 
-        Ref: DBPassword
-      MasterUsername: 
-        Ref: DBUsername
-    Type: "AWS::RDS::DBCluster"
-  RDSDBClusterParameterGroup: 
-    Properties: 
-      Description: "CloudFormation Sample Aurora Cluster Parameter Group"
-      Family: aurora5.6
-      Parameters: 
-        time_zone: US/Eastern
-    Type: "AWS::RDS::DBClusterParameterGroup"
   # RDSDBInstance1: 
   #   Properties: 
   #     AvailabilityZone: 
@@ -211,39 +292,7 @@ Resources:
   #     # MonitoringRoleArn: !GetAtt PostgresDBRole.Arn
   #     VPCSecurityGroups: 
   #       - !GetAtt RDSSecurityGroup.GroupId
-  DBSubnetGroup: 
-    Properties: 
-      DBSubnetGroupDescription: description
-      SubnetIds: 
-        - !Ref PrivateSubnet1
-        - !Ref PrivateSubnet2
-      Tags: 
-        - 
-          Key: Name
-          Value: !Sub '${Env}-${DeploymentRootName}-${CompId}-db-subnet-group-${AWS::AccountId}-${Region}'
-    Type: "AWS::RDS::DBSubnetGroup"
-  RDSBastionHostSecurityGroup:
-    Type: 'AWS::EC2::SecurityGroup'
-    Properties:
-      GroupDescription: allow connections from specified CIDR ranges
-      VpcId: !Ref VPC
-      Tags:
-        - Key: Name
-          Value: RDSBastionHostSG
-      SecurityGroupIngress:
-        - IpProtocol: tcp
-          FromPort: 3389
-          ToPort: 3389
-          CidrIp: !Ref InboundTraffic
-  # VPC and Bastion definitions...
-  VPC:
-    Type: AWS::EC2::VPC
-    Properties:
-      CidrBlock: !Ref VpcCIDR
-      EnableDnsHostnames: true
-      Tags:
-        - Key: Name
-          Value: !Sub '${Env}-${DeploymentRootName}-${CompId}-vpc-${AWS::AccountId}-${Region}'
+  
   # Removed Internet Gateway for the time being for security purposes
   # InternetGateway:
   #   Type: AWS::EC2::InternetGateway
@@ -278,27 +327,6 @@ Resources:
   #     Tags:
   #       - Key: Name
   #         Value: !Sub "${ProjectName} Public Subnet (AZ2)"
-  PrivateSubnet1:
-    Type: AWS::EC2::Subnet
-    Properties:
-      VpcId: !Ref VPC
-      AvailabilityZone: !Select [0, !GetAZs ""]
-      CidrBlock: !Ref PrivateSubnet1CIDR
-      MapPublicIpOnLaunch: false
-      Tags:
-        - Key: Name
-          Value: !Sub '${Env}-${DeploymentRootName}-${CompId}-private-subnet-${AWS::AccountId}-${Region}'
-  # Don't need it here for the ref. Left for reference.
-  PrivateSubnet2:
-    Type: AWS::EC2::Subnet
-    Properties:
-      VpcId: !Ref VPC
-      AvailabilityZone: !Select [1, !GetAZs ""]
-      CidrBlock: !Ref PrivateSubnet2CIDR
-      MapPublicIpOnLaunch: false
-      Tags:
-        - Key: Name
-          Value: !Sub '${Env}-${DeploymentRootName}-${CompId}-private-subnet2-${AWS::AccountId}-${Region}'
   # NatGateway1EIP:
   #   Type: AWS::EC2::EIP
   #   DependsOn: InternetGatewayAttachment
@@ -313,7 +341,7 @@ Resources:
   #   Type: AWS::EC2::NatGateway
   #   Properties:
   #     AllocationId: !GetAtt NatGateway1EIP.AllocationId
-  #     SubnetId: !Ref PublicSubnet1
+  #     SubnetId: !Ref PrivateSubnet1
   # NatGateway2:
   #   Type: AWS::EC2::NatGateway
   #   Properties:
@@ -343,24 +371,12 @@ Resources:
   #   Properties:
   #     RouteTableId: !Ref PublicRouteTable
   #     SubnetId: !Ref PublicSubnet2
-  PrivateRouteTable1:
-    Type: AWS::EC2::RouteTable
-    Properties:
-      VpcId: !Ref VPC
-      Tags:
-        - Key: Name
-          Value: !Sub '${Env}-${DeploymentRootName}-${CompId}-private-routes-${AWS::AccountId}-${Region}'
-  DefaultPrivateRoute1:
-    Type: AWS::EC2::Route
-    Properties:
-      RouteTableId: !Ref PrivateRouteTable1
-      DestinationCidrBlock: 0.0.0.0/0
-      NatGatewayId: !Ref NatGateway1
-  PrivateSubnet1RouteTableAssociation:
-    Type: AWS::EC2::SubnetRouteTableAssociation
-    Properties:
-      RouteTableId: !Ref PrivateRouteTable1
-      SubnetId: !Ref PrivateSubnet1
+  # DefaultPrivateRoute1:
+  #   Type: AWS::EC2::Route
+  #   Properties:
+  #     RouteTableId: !Ref PrivateRouteTable1
+  #     DestinationCidrBlock: 0.0.0.0/0
+  #     NatGatewayId: !Ref NatGateway1
   # PrivateRouteTable2:
   #   Type: AWS::EC2::RouteTable
   #   Properties:
@@ -379,26 +395,3 @@ Resources:
   #   Properties:
   #     RouteTableId: !Ref PrivateRouteTable2
   #     SubnetId: SubnetId: !Sub '${Env}-${DeploymentRootName}-${CompId}-private-subnet-rt-association2-${AWS::AccountId}-${Region}'
-  BastionHostSecurityGroup:
-    Type: 'AWS::EC2::SecurityGroup'
-    Properties:
-      GroupDescription: allow connections from specified CIDR ranges
-      VpcId: !Ref VPC
-      Tags:
-        - Key: Name
-          Value: RedshiftBastionHostSG
-      SecurityGroupIngress:
-        - IpProtocol: tcp
-          FromPort: 5432
-          ToPort: 5432
-          CidrIp: !Ref InboundTraffic
-  RDSSecurityGroup:
-    Type: 'AWS::EC2::SecurityGroup'
-    Properties:
-      GroupDescription: Security group
-      SecurityGroupIngress:
-        - IpProtocol: tcp
-          FromPort: !Ref DBPortNumber
-          ToPort: !Ref DBPortNumber
-          SourceSecurityGroupId: !Ref BastionHostSecurityGroup
-      VpcId: !Ref VPC

@@ -242,6 +242,24 @@ Resources:
       Environment:
         Variables: 
           GlueWorkflowName: !Join [ "396791034774", !Split  ["127700773039", !Ref ProducerWorkflow]]
+  # RDSConnection:
+  #   Type: AWS::Glue::Connection
+  #   Properties: 
+  #     CatalogId: !Sub "${AWS::AccountId}"
+  #     ConnectionInput:
+  #       Name: !Sub "${Env}-${DeploymentRootName}-${CompId}-rds-connection-${AWS::AccountId}-${Region}"
+  #       Description: Connection to the RDS hr data source.
+  #       ConnectionType: NETWORK
+  #       PhysicalConnectionRequirements:
+  #         AvailabilityZone: !Select [0, !GetAZs ""]
+  #         SecurityGroupIdList:
+  #           - !ImportValue "LZ:RDSBastionHostSecurityGroup"
+  #           - !ImportValue "LZ:RDSSecurityGroup"
+  #         SubnetId: !ImportValue "LZ:RDSPublicSubnet"
+  #       ConnectionProperties:
+  #         "JDBC_CONNECTION_URL": !Join ['', ["jdbc:postgresql:", !ImportValue "LZ:RDSClusterEndpoint", ":", !ImportValue "LZ:RDSClusterPort", "employees"]] 
+  #         "JDBC_USERNAME": !Ref RDSUsername
+  #         "JDBC_PASSWORD": !Ref RDSPassword
   RDSConnection:
     Type: AWS::Glue::Connection
     Properties: 
@@ -254,8 +272,6 @@ Resources:
           AvailabilityZone: !Select [0, !GetAZs ""]
           SecurityGroupIdList:
             - !ImportValue "LZ:RDSSecurityGroup"
-          Subnet:
-            - 
         ConnectionProperties:
           "JDBC_CONNECTION_URL": !Join ['', ["jdbc:postgresql:", !ImportValue "LZ:RDSClusterEndpoint", ":", !ImportValue "LZ:RDSClusterPort", "employees"]] 
           "JDBC_USERNAME": !Ref RDSUsername

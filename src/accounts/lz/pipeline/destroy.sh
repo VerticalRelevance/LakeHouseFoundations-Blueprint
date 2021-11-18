@@ -8,6 +8,11 @@ aws cloudformation delete-stack --stack-name $GlueStackName --output json
 aws cloudformation wait stack-delete-complete --stack-name $GlueStackName --output json --no-paginate 
 echo "Glue stack deleted."
 
+echo "Deleting RDS stack.."
+aws cloudformation delete-stack --stack-name $RdsStackName
+aws cloudformation wait stack-delete-complete --stack-name $RdsStackName --output json --no-paginate
+echo "RDS stack deleted."
+
 echo "Deleting S3 stack.."
 # Delete bucket objects. {<Curlys catch any error>} || { echo "Error...not gonna kill your script"}
 CompId="$AccountShorthand-s3"
@@ -22,5 +27,6 @@ CompId="$AccountShorthand-s3"
     echo "Error deleting resource bucket objects. It is likely already deleted. Check."
 }
 aws cloudformation delete-stack --stack-name $S3StackName
-aws cloudformation wait stack-delete-complete --stack-name $S3StackName --output json --no-paginate 
+aws cloudformation wait stack-delete-complete --stack-name $S3StackName --output json --no-paginate
+
 echo "S3 stack deleted."

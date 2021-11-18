@@ -115,6 +115,23 @@ Resources:
       Tags:
         - Key: Name
           Value: !Sub '${Env}-${DeploymentRootName}-${CompId}-vpc-${AWS::AccountId}-${Region}'
+  RDSClusterKMSKey:
+    Type: 'AWS::KMS::Key'
+    Properties:
+      KeyPolicy:
+        Version: 2012-10-17
+        Id: !Sub '${Env}-${DeploymentRootName}-${CompId}-rds-key-policy-${AWS::AccountId}-${Region}'
+        Statement:
+          - Sid: Enable IAM User Permissions
+            Effect: Allow
+            Principal:
+              AWS: !Join 
+                - ''
+                - - 'arn:aws:iam::'
+                  - !Ref 'AWS::AccountId'
+                  - ':root'
+            Action: 'kms:*'
+            Resource: '*'
   RDSCluster: 
     Type: "AWS::RDS::DBCluster"
     Properties: 
@@ -125,6 +142,10 @@ Resources:
       EnableHttpEndpoint: true
       MasterUserPassword: !Ref DBPassword
       MasterUsername: !Ref DBUsername
+      KmsKeyId: !GetAtt  RDSClusterKMSKey.Arn
+      VpcSecurityGroupIds:
+        - !GetAtt RDSBastionHostSecurityGroup.GroupId
+        - !GetAtt RDSSecurityGroup.GroupId
   DBSubnetGroup: 
     Type: "AWS::RDS::DBSubnetGroup"
     Properties: 
@@ -136,6 +157,8 @@ Resources:
         - 
           Key: Name
           Value: !Sub '${Env}-${DeploymentRootName}-${CompId}-db-subnet-group-${AWS::AccountId}-${Region}'
+
+  # Public Subnet & bastion host
   RDSBastionHostSecurityGroup:
     Type: 'AWS::EC2::SecurityGroup'
     Properties:
@@ -149,16 +172,68 @@ Resources:
       Tags:
         - Key: Name
           Value: RDSBastionHostSG
+  PublicSubnet1:
+    Type: AWS::EC2::Subnet
+    Properties:
+      VpcId: !Ref VPC
+      AvailabilityZone: !Select [0, !GetAZs ""]
+      CidrBlock: !Ref PublicSubnet1CIDR
+      MapPublicIpOnLaunch: false
+      Tags:
+        - Key: Name
+          Value: !Sub '${Env}-${DeploymentRootName}-${CompId}-public-subnet-${AWS::AccountId}-${Region}'
+  InternetGateway:
+    Type: AWS::EC2::InternetGateway
+    Properties:
+      Tags:
+        - Key: Name
+          Value: !Sub '${Env}-${DeploymentRootName}-${CompId}-internet-gateway-${AWS::AccountId}-${Region}'
+  InternetGatewayAttachment:
+    Type: AWS::EC2::VPCGatewayAttachment
+    Properties:
+      InternetGatewayId: !Ref InternetGateway
+      VpcId: !Ref VPC
+  PublicRouteTable:
+    Type: AWS::EC2::RouteTable
+    Properties:
+      VpcId: !Ref VPC
+      Tags:
+        - Key: Name
+          Value: !Sub '${Env}-${DeploymentRootName}-${CompId}-public-routes-${AWS::AccountId}-${Region}'
+  DefaultPublicRoute:
+    Type: AWS::EC2::Route
+    DependsOn: InternetGatewayAttachment
+    Properties:
+      RouteTableId: !Ref PublicRouteTable
+      DestinationCidrBlock: 0.0.0.0/0
+      GatewayId: !Ref InternetGateway
+  PublicSubnet1RouteTableAssociation:
+    Type: AWS::EC2::SubnetRouteTableAssociation
+    Properties:
+      RouteTableId: !Ref PublicRouteTable
+      SubnetId: !Ref PublicSubnet1
+  NatGateway1EIP:
+    Type: AWS::EC2::EIP
+    DependsOn: InternetGatewayAttachment
+    Properties:
+      Domain: vpc
+  NatGateway1:
+    Type: AWS::EC2::NatGateway
+    Properties:
+      AllocationId: !GetAtt NatGateway1EIP.AllocationId
+      SubnetId: !Ref PublicSubnet1
+  
   RDSSecurityGroup:
     Type: 'AWS::EC2::SecurityGroup'
     Properties:
+      VpcId: !Ref VPC
       GroupDescription: Security group
       SecurityGroupIngress:
         - IpProtocol: tcp
           FromPort: !Ref DBPortNumber
           ToPort: !Ref DBPortNumber
-          SourceSecurityGroupId: !Ref BastionHostSecurityGroup
-      VpcId: !Ref VPC
+          SourceSecurityGroupId: !Ref RDSBastionHostSecurityGroup
+          # CidrIp: !Ref InboundTraffic
   PrivateSubnet1:
     Type: AWS::EC2::Subnet
     Properties:
@@ -202,10 +277,18 @@ Outputs:
     Export:
       Name: !Sub "LZ:RDSClusterPort"
     Description: "The port to the provisioned RDS cluster."
+  RDSBastionHostSecurityGroup:
+    Value: !Ref RDSBastionHostSecurityGroup
+    Export:
+      Name: !Sub "LZ:RDSBastionHostSecurityGroup"
   RDSSecurityGroup:
     Value: !Ref RDSSecurityGroup
     Export:
       Name: !Sub "LZ:RDSSecurityGroup"
+  RDSPublicSubnet:
+    Value: !Ref PublicSubnet1
+    Export:
+      Name: !Sub "LZ:RDSPublicSubnet"
 
 
   # RDSDBClusterParameterGroup: 
@@ -327,21 +410,11 @@ Outputs:
   #     Tags:
   #       - Key: Name
   #         Value: !Sub "${ProjectName} Public Subnet (AZ2)"
-  # NatGateway1EIP:
-  #   Type: AWS::EC2::EIP
-  #   DependsOn: InternetGatewayAttachment
-  #   Properties:
-  #     Domain: vpc
   # NatGateway2EIP:
   #   Type: AWS::EC2::EIP
   #   DependsOn: InternetGatewayAttachment
   #   Properties:
   #     Domain: vpc
-  # NatGateway1:
-  #   Type: AWS::EC2::NatGateway
-  #   Properties:
-  #     AllocationId: !GetAtt NatGateway1EIP.AllocationId
-  #     SubnetId: !Ref PrivateSubnet1
   # NatGateway2:
   #   Type: AWS::EC2::NatGateway
   #   Properties:

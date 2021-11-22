@@ -1,0 +1,202 @@
+AWSTemplateFormatVersion: 2010-09-09
+Description: AWSCloudFormationStackSetAdministrationRole to enable use of AWS CloudFormation StackSets.
+
+Parameters:
+  DeploymentRootName:
+    Description: Root name of project/component deployment
+    Type: String
+    Default: lakehouse
+  AccountShorthand:
+    Description: Abbreviated logical account identifier
+    Type: String
+    Default: lz
+  CompId:
+    Description: This templates' component identifier string
+    Type: String
+    Default: lh-s3
+  Env:
+    Description: The environment in which the account is being deployed.
+    Type: String
+    Default: dev
+    AllowedValues:
+      - dev
+      - qa
+      - prod
+  Region:
+    Description: The region for the template to be deployed.
+    Type: String
+    Default: us-east-2
+    AllowedValues:
+      - us-east-2
+      - us-east-1
+  ResourceBucketName:
+    Description: The name of the deployment resource bucket.
+    Type: String
+
+Resources:
+  LoggingBucket:
+    Type: 'AWS::S3::Bucket'
+    Properties:
+      BucketName: !Sub '${Env}-${DeploymentRootName}-${CompId}-logs-${AWS::AccountId}-${Region}'
+      AccessControl: LogDeliveryWrite
+  GlueStudioProcessingBucket:
+    Type: AWS::S3::Bucket
+    Properties:
+      BucketName: !Sub '${Env}-${DeploymentRootName}-${CompId}-glue-tmp-${AWS::AccountId}-${Region}'
+      LoggingConfiguration:
+        DestinationBucketName: !Ref LoggingBucket
+        LogFilePrefix: glue-tmp-bucket/
+      BucketEncryption: 
+        ServerSideEncryptionConfiguration: 
+          - ServerSideEncryptionByDefault:
+              SSEAlgorithm: AES256
+  ResourceBucket:
+    Type: AWS::S3::Bucket
+    Properties:
+      BucketName: !Sub '${Env}-lakehouse-${CompId}-resources-${AWS::AccountId}-${Region}'
+      LoggingConfiguration:
+        DestinationBucketName: !Ref LoggingBucket
+        LogFilePrefix: resources-bucket/
+      BucketEncryption: 
+        ServerSideEncryptionConfiguration: 
+          - ServerSideEncryptionByDefault:
+              SSEAlgorithm: AES256
+  RawZoneBucket:
+    Type: AWS::S3::Bucket
+    Properties: 
+      BucketName: !Sub '${Env}-${DeploymentRootName}-${CompId}-raw-${AWS::AccountId}-${Region}'
+      LoggingConfiguration:
+        DestinationBucketName: !Ref LoggingBucket
+        LogFilePrefix: raw-zone-bucket/
+      OwnershipControls:
+        Rules:
+          - ObjectOwnership: BucketOwnerPreferred
+      BucketEncryption: 
+        ServerSideEncryptionConfiguration: 
+          - ServerSideEncryptionByDefault:
+              SSEAlgorithm: AES256
+  RawZoneBucketPolicy: # Allows access for Glue Job in LZ
+    Type: AWS::S3::BucketPolicy
+    Properties:
+      Bucket: !Ref RawZoneBucket
+      PolicyDocument:
+        Version: 2012-10-17
+        Statement:
+          - Action:
+              - 's3:GetObject'
+              - 's3:PutObject'
+              - 's3:List*'
+            Effect: Allow
+            Resource: 
+              - !Join ['', ['arn:aws:s3:::', !Ref RawZoneBucket, '/*']]
+            Principal:
+              AWS:
+                - "arn:aws:iam::396791034774:root"
+          - Action:
+              - 's3:*'
+            Effect: Allow
+            Resource: 
+              - !Join ['', ['arn:aws:s3:::', !Ref RawZoneBucket, '/*']]
+            Principal:
+              Service:
+                - glue.amazonaws.com
+                - lakeformation.amazonaws.com
+
+  TransformedZoneBucket:
+    Type: AWS::S3::Bucket
+    Properties: 
+      BucketName: !Sub '${Env}-${DeploymentRootName}-${CompId}-transformed-${AWS::AccountId}-${Region}'
+      LoggingConfiguration:
+        DestinationBucketName: !Ref LoggingBucket
+        LogFilePrefix: transformed-zone-bucket/
+      BucketEncryption: 
+        ServerSideEncryptionConfiguration: 
+          - ServerSideEncryptionByDefault:
+              SSEAlgorithm: AES256
+  CuratedZoneBucket:
+    Type: AWS::S3::Bucket
+    Properties:
+      BucketName: !Sub '${Env}-${DeploymentRootName}-${CompId}-curated-${AWS::AccountId}-${Region}'
+      AccessControl: LogDeliveryWrite
+      LoggingConfiguration:
+        DestinationBucketName: !Ref LoggingBucket
+        LogFilePrefix: curated-zone-bucket/
+      BucketEncryption: 
+        ServerSideEncryptionConfiguration: 
+          - ServerSideEncryptionByDefault:
+              SSEAlgorithm: AES256
+  CuratedZoneBucketPolicy: # Allows access for Gov account
+    Type: AWS::S3::BucketPolicy
+    Properties:
+      Bucket: !Ref CuratedZoneBucket
+      PolicyDocument:
+        Version: 2012-10-17
+        Statement:
+          - Action:
+              - 's3:List*'
+              - 's3:Get*'
+            Effect: Allow
+            Resource: 
+              - !Join ['', ['arn:aws:s3:::', !Ref CuratedZoneBucket]]
+              - !Join ['', ['arn:aws:s3:::', !Ref CuratedZoneBucket, '/*']]
+            Principal:
+              AWS:
+                - "arn:aws:iam::488653863644:root"
+                - "arn:aws:iam::456886174736:role/dev-lakehouse-cons-redshift-rRedshiftSpectrumRole-8EZINP1YD4XV"
+          - Action:
+              - 's3:*'
+            Effect: Allow
+            Resource: 
+              - !Join ['', ['arn:aws:s3:::', !Ref CuratedZoneBucket, '/*']]
+            Principal:
+              Service:
+                - glue.amazonaws.com
+                - lakeformation.amazonaws.com
+                - athena.amazonaws.com
+
+Outputs:
+  GlueStudioProcessingBucketName:
+    Value: !Ref GlueStudioProcessingBucket
+    Export:
+      Name: !Sub "LH:GlueTempBucketName"
+    Description: "Lake House Glue processing bucket name."
+  RawZoneBucketArn:
+    Value: !GetAtt RawZoneBucket.Arn
+    Export:
+      Name: !Sub "LH:RawZoneBucketArn"
+    Description: "Lake House raw bucket ARN"
+  RawZoneBucketName:
+    Value: !Ref RawZoneBucket
+    Export:
+      Name: !Sub "LH:RawZoneBucketName"
+    Description: "Lake House raw bucket name"
+  TransformedZoneBucketArn:
+    Value: !GetAtt TransformedZoneBucket.Arn
+    Export:
+      Name: !Sub "LH:TransformedZoneBucketArn"
+    Description: "Lake House transformed (cleaned data) bucket ARN"
+  TransformedZoneBucketName:
+    Value: !Ref TransformedZoneBucket
+    Export:
+      Name: !Sub "LH:TransformedZoneBucketName"
+    Description: "Lake House transformed bucket name"
+  CuratedZoneBucketArn:
+    Value: !GetAtt CuratedZoneBucket.Arn
+    Export:
+      Name: !Sub "LH:CuratedZoneBucketArn"
+    Description: "Lake House curated (data lake) bucket ARN"
+  CuratedZoneBucketName:
+    Value: !Ref CuratedZoneBucket
+    Export:
+      Name: !Sub "LH:CuratedZoneBucketName"
+    Description: "Lake House curated bucket name"
+  ResourceBucketArn:
+    Value: !GetAtt ResourceBucket.Arn
+    Export:
+      Name: !Sub "LH:ResourceBucketArn"
+    Description: "Lake House Glue job scripts for running data ingestion pipeline"
+  ResourceBucketName:
+    Value: !Ref ResourceBucket
+    Export:
+      Name: !Sub "LH:ResourceBucketName"
+    Description: "Lake House glue job resources bucket name."

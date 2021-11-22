@@ -1,0 +1,470 @@
+AWSTemplateFormatVersion: 2010-09-09
+Description: Landing Zone Postgresql RDS instance.
+
+Parameters:
+  DeploymentRootName:
+    Description: Root name of project/component deployment
+    Type: String
+    Default: lakehouse
+  AccountShorthand:
+    Description: Abbreviated logical account identifier
+    Type: String
+    Default: lz
+  CompId:
+    Description: This templates' component identifier string
+    Type: String
+    Default: lz-glue
+  Env:
+    Description: The environment in which the account is being deployed.
+    Type: String
+    Default: dev
+    AllowedValues:
+      - dev
+      - qa
+      - prod
+  Region:
+    Description: The region for the template to be deployed.
+    Type: String
+    Default: us-east-2
+    AllowedValues:
+      - us-east-2
+      - us-east-1
+  ResourceBucketName:
+    Description: The name of the deployment resource bucket.
+    Type: String
+  VpcCIDR:
+    Description: Please enter the IP range (CIDR notation) for this VPC
+    Type: String
+    Default: 10.0.0.3/16
+  PublicSubnet1CIDR:
+    Description: Please enter the IP range (CIDR notation) for the public subnet in the first Availability Zone
+    Type: String
+    Default: 10.0.3.0/24
+  PrivateSubnet1CIDR:
+    Description: Please enter the IP range (CIDR notation) for the private subnet in the first Availability Zone
+    Type: String
+    Default: 10.0.8.0/24
+  PrivateSubnet2CIDR:
+    Description: Please enter the IP range (CIDR notation) for the private subnet in the second Availability Zone
+    Type: String
+    Default: 10.0.9.0/24
+  InboundTraffic:
+    Description: Allow inbound traffic to the bastion host from this CIDR range.
+    Type: String
+    MinLength: 9
+    MaxLength: 18
+    Default: 0.0.0.0/0
+    AllowedPattern: '(\d{1,3})\.(\d{1,3})\.(\d{1,3})\.(\d{1,3})/(\d{1,2})'
+    ConstraintDescription: must be a valid CIDR range of the form x.x.x.x/x.
+  DBUsername:
+    Description: >-
+      The user name that is associated with the master user account for the
+      cluster that is being created
+    Type: String
+    Default: dbUser
+    AllowedPattern: '([a-zA-Z])([a-zA-Z]|[0-9])*'
+  DBPassword:
+    Description: >-
+      The password that is associated with the master user account for the
+      cluster that is being created.
+    Type: String
+    NoEcho: 'true'
+    MinLength: 8
+    MaxLength: 64
+  DBPortNumber:
+    Description: The port number on which the cluster accepts incoming connections.
+    Type: String
+    Default: 5432
+Resources:
+  PostgresDBRole:
+    Type: AWS::IAM::Role
+    Properties:
+      RoleName: !Sub "${Env}-${DeploymentRootName}-${CompId}-role-${AWS::AccountId}-${Region}"
+      AssumeRolePolicyDocument:
+        Version: 2012-10-17
+        Statement:
+          - Effect: Allow
+            Principal:
+              Service:
+                - rds.amazonaws.com
+                - glue.amazonaws.com
+                - athena.amazonaws.com
+            Action: 'sts:AssumeRole'
+      Policies:
+        - PolicyName: !Sub '${Env}-${DeploymentRootName}-${CompId}-role-policy-${AWS::AccountId}-${Region}'
+          PolicyDocument:
+            Version: "2012-10-17"
+            Statement:
+              -
+                Effect: "Allow"
+                Action: 
+                  - "rds:*"
+                  - "glue:*"
+                  - "logs:*"
+                Resource:
+                  - "arn:aws:s3:::*"
+                  - "arn:aws:glue:*:*:*"
+                  - "arn:aws:rds:*:*:*"
+                  - "arn:aws:logs:*:*:*"
+                  - "arn:aws:lambda:*:*:*"
+  VPC:
+    Type: AWS::EC2::VPC
+    Properties:
+      CidrBlock: !Ref VpcCIDR
+      EnableDnsHostnames: true
+      Tags:
+        - Key: Name
+          Value: !Sub '${Env}-${DeploymentRootName}-${CompId}-vpc-${AWS::AccountId}-${Region}'
+  RDSClusterKMSKey:
+    Type: 'AWS::KMS::Key'
+    Properties:
+      KeyPolicy:
+        Version: 2012-10-17
+        Id: !Sub '${Env}-${DeploymentRootName}-${CompId}-rds-key-policy-${AWS::AccountId}-${Region}'
+        Statement:
+          - Sid: Enable IAM User Permissions
+            Effect: Allow
+            Principal:
+              AWS: !Join 
+                - ''
+                - - 'arn:aws:iam::'
+                  - !Ref 'AWS::AccountId'
+                  - ':root'
+            Action: 'kms:*'
+            Resource: '*'
+  RDSCluster: 
+    Type: "AWS::RDS::DBCluster"
+    Properties: 
+      # DBClusterParameterGroupName: !Ref RDSDBClusterParameterGroup
+      DBSubnetGroupName: !Ref DBSubnetGroup
+      Engine: aurora-postgresql
+      EngineMode: serverless
+      EnableHttpEndpoint: true
+      MasterUserPassword: !Ref DBPassword
+      MasterUsername: !Ref DBUsername
+      KmsKeyId: !GetAtt  RDSClusterKMSKey.Arn
+      VpcSecurityGroupIds:
+        - !GetAtt RDSBastionHostSecurityGroup.GroupId
+        - !GetAtt RDSSecurityGroup.GroupId
+  DBSubnetGroup: 
+    Type: "AWS::RDS::DBSubnetGroup"
+    Properties: 
+      DBSubnetGroupDescription: The subnet group for the example RDS data source.
+      SubnetIds: 
+        - !Ref PrivateSubnet1
+        - !Ref PrivateSubnet2
+      Tags: 
+        - 
+          Key: Name
+          Value: !Sub '${Env}-${DeploymentRootName}-${CompId}-db-subnet-group-${AWS::AccountId}-${Region}'
+
+  # Public Subnet & bastion host
+  RDSBastionHostSecurityGroup:
+    Type: 'AWS::EC2::SecurityGroup'
+    Properties:
+      GroupDescription: allow connections from specified CIDR ranges
+      VpcId: !Ref VPC
+      SecurityGroupIngress:
+        - IpProtocol: tcp
+          FromPort: !Ref DBPortNumber
+          ToPort: !Ref DBPortNumber
+          CidrIp: !Ref InboundTraffic
+      Tags:
+        - Key: Name
+          Value: RDSBastionHostSG
+  PublicSubnet1:
+    Type: AWS::EC2::Subnet
+    Properties:
+      VpcId: !Ref VPC
+      AvailabilityZone: !Select [0, !GetAZs ""]
+      CidrBlock: !Ref PublicSubnet1CIDR
+      MapPublicIpOnLaunch: false
+      Tags:
+        - Key: Name
+          Value: !Sub '${Env}-${DeploymentRootName}-${CompId}-public-subnet-${AWS::AccountId}-${Region}'
+  InternetGateway:
+    Type: AWS::EC2::InternetGateway
+    Properties:
+      Tags:
+        - Key: Name
+          Value: !Sub '${Env}-${DeploymentRootName}-${CompId}-internet-gateway-${AWS::AccountId}-${Region}'
+  InternetGatewayAttachment:
+    Type: AWS::EC2::VPCGatewayAttachment
+    Properties:
+      InternetGatewayId: !Ref InternetGateway
+      VpcId: !Ref VPC
+  PublicRouteTable:
+    Type: AWS::EC2::RouteTable
+    Properties:
+      VpcId: !Ref VPC
+      Tags:
+        - Key: Name
+          Value: !Sub '${Env}-${DeploymentRootName}-${CompId}-public-routes-${AWS::AccountId}-${Region}'
+  DefaultPublicRoute:
+    Type: AWS::EC2::Route
+    DependsOn: InternetGatewayAttachment
+    Properties:
+      RouteTableId: !Ref PublicRouteTable
+      DestinationCidrBlock: 0.0.0.0/0
+      GatewayId: !Ref InternetGateway
+  PublicSubnet1RouteTableAssociation:
+    Type: AWS::EC2::SubnetRouteTableAssociation
+    Properties:
+      RouteTableId: !Ref PublicRouteTable
+      SubnetId: !Ref PublicSubnet1
+  NatGateway1EIP:
+    Type: AWS::EC2::EIP
+    DependsOn: InternetGatewayAttachment
+    Properties:
+      Domain: vpc
+  NatGateway1:
+    Type: AWS::EC2::NatGateway
+    Properties:
+      AllocationId: !GetAtt NatGateway1EIP.AllocationId
+      SubnetId: !Ref PublicSubnet1
+  
+  RDSSecurityGroup:
+    Type: 'AWS::EC2::SecurityGroup'
+    Properties:
+      VpcId: !Ref VPC
+      GroupDescription: Security group
+      SecurityGroupIngress:
+        - IpProtocol: tcp
+          FromPort: !Ref DBPortNumber
+          ToPort: !Ref DBPortNumber
+          SourceSecurityGroupId: !Ref RDSBastionHostSecurityGroup
+          # CidrIp: !Ref InboundTraffic
+  PrivateSubnet1:
+    Type: AWS::EC2::Subnet
+    Properties:
+      VpcId: !Ref VPC
+      AvailabilityZone: !Select [0, !GetAZs ""]
+      CidrBlock: !Ref PrivateSubnet1CIDR
+      MapPublicIpOnLaunch: false
+      Tags:
+        - Key: Name
+          Value: !Sub '${Env}-${DeploymentRootName}-${CompId}-private-subnet-${AWS::AccountId}-${Region}'
+  PrivateSubnet2:
+    Type: AWS::EC2::Subnet
+    Properties:
+      VpcId: !Ref VPC
+      AvailabilityZone: !Select [1, !GetAZs ""]
+      CidrBlock: !Ref PrivateSubnet2CIDR
+      MapPublicIpOnLaunch: false
+      Tags:
+        - Key: Name
+          Value: !Sub '${Env}-${DeploymentRootName}-${CompId}-private-subnet2-${AWS::AccountId}-${Region}'
+  PrivateRouteTable1:
+    Type: AWS::EC2::RouteTable
+    Properties:
+      VpcId: !Ref VPC
+      Tags:
+        - Key: Name
+          Value: !Sub '${Env}-${DeploymentRootName}-${CompId}-private-routes-${AWS::AccountId}-${Region}'
+  PrivateSubnet1RouteTableAssociation:
+    Type: AWS::EC2::SubnetRouteTableAssociation
+    Properties:
+      RouteTableId: !Ref PrivateRouteTable1
+      SubnetId: !Ref PrivateSubnet1
+Outputs:
+  RDSConnectionEndpoint:
+    Value: !GetAtt RDSCluster.Endpoint.Address
+    Export:
+      Name: !Sub "LZ:RDSClusterEndpoint"
+    Description: "The endpoint to the provisioned RDS cluster."
+  RDSConnectionPort:
+    Value: !GetAtt RDSCluster.Endpoint.Port
+    Export:
+      Name: !Sub "LZ:RDSClusterPort"
+    Description: "The port to the provisioned RDS cluster."
+  RDSBastionHostSecurityGroup:
+    Value: !Ref RDSBastionHostSecurityGroup
+    Export:
+      Name: !Sub "LZ:RDSBastionHostSecurityGroup"
+  RDSSecurityGroup:
+    Value: !Ref RDSSecurityGroup
+    Export:
+      Name: !Sub "LZ:RDSSecurityGroup"
+  RDSPublicSubnet:
+    Value: !Ref PublicSubnet1
+    Export:
+      Name: !Sub "LZ:RDSPublicSubnet"
+
+
+  # RDSDBClusterParameterGroup: 
+  #   Type: "AWS::RDS::DBClusterParameterGroup"
+  #   Properties: 
+  #     Description: "CloudFormation Sample Aurora Cluster Parameter Group"
+  #     Family: aurora-postgresql10 # aurora5.6
+  #     Parameters: 
+  #       time_zone: US/Eastern
+  # PostgresDB:
+  #   Type: 'AWS::RDS::DBInstance'
+  #   Properties:
+  #     DBInstanceIdentifier: !Sub "${Env}-${DeploymentRootName}-${CompId}-instance-id-${AWS::AccountId}-${Region}" # Must begin with a letter and must not end with a hyphen or contain two consecutive hyphens.
+  #     DBName: LakeHousePG
+  #     DBSubnetGroupName: !Ref DBSubnetGroup
+  #     DBInstanceClass: "db.m5.large"
+  #     AllocatedStorage: 100
+  #     Engine: postgres # aurora-postgresql
+  #     EngineVersion: 13.4
+  #     MasterUsername: !Ref DBUsername
+  #     MasterUserPassword: !Ref DBPassword
+  #     # MonitoringInterval: '60'
+  #     # MonitoringRoleArn: !GetAtt PostgresDBRole.Arn
+  #     VPCSecurityGroups: 
+  #       - !GetAtt RDSSecurityGroup.GroupId
+  # RDSDBInstance1: 
+  #   Properties: 
+  #     AvailabilityZone: 
+  #       Fn::GetAtt:
+  #         - PrivateSubnet1
+  #         - AvailabilityZone
+  #     DBClusterIdentifier: 
+  #       Ref: RDSCluster
+  #     DBInstanceClass: db.r3.xlarge
+  #     DBParameterGroupName: 
+  #       Ref: RDSDBParameterGroup
+  #     DBSubnetGroupName: 
+  #       Ref: DBSubnetGroup
+  #     Engine: aurora
+  #     PubliclyAccessible: "true"
+  #   Type: "AWS::RDS::DBInstance"
+  # RDSDBInstance2: 
+  #   Properties: 
+  #     AvailabilityZone: 
+  #       Fn::GetAtt:
+  #         - PrivateSubnet2
+  #         - AvailabilityZone
+  #     DBClusterIdentifier: 
+  #       Ref: RDSCluster
+  #     DBInstanceClass: db.r5.large
+  #     DBParameterGroupName: 
+  #       Ref: RDSDBParameterGroup
+  #     DBSubnetGroupName: 
+  #       Ref: DBSubnetGroup
+  #     Engine: aurora
+  #     PubliclyAccessible: "true"
+  #   Type: "AWS::RDS::DBInstance"
+  # RDSDBParameterGroup:
+  #   Type: 'AWS::RDS::DBParameterGroup'
+  #   Properties:
+  #     Description: CloudFormation Sample Aurora Parameter Group
+  #     Family: aurora5.6
+  #     Parameters:
+  #       sql_mode: IGNORE_SPACE
+  #       max_allowed_packet: 1024
+  #       innodb_buffer_pool_size: '{DBInstanceClassMemory*3/4}'
+  # End Aurora Cluster
+  ###
+  # PostgresAuroraDB:
+  #   Type: 'AWS::RDS::DBInstance'
+  #   Properties:
+  #     DBInstanceIdentifier: !Sub "${Env}-${DeploymentRootName}-${CompId}-aurora-pg-${AWS::AccountId}-${Region}" # Must begin with a letter and must not end with a hyphen or contain two consecutive hyphens.
+  #     DBName: LakeHousePGAurora
+  #     DBSubnetGroupName: !Ref DBSubnetGroup
+  #     DBInstanceClass: "db.r5.large"
+  #     # StorageType: io1
+  #     # Iops: 1000
+  #     AllocatedStorage: 100
+  #     Engine: aurora-postgresql
+  #     # EngineVersion: 13.4
+  #     MasterUsername: !Ref DBUsername
+  #     MasterUserPassword: !Ref DBPassword
+  #     # MonitoringInterval: '60'
+  #     # MonitoringRoleArn: !GetAtt PostgresDBRole.Arn
+  #     VPCSecurityGroups: 
+  #       - !GetAtt RDSSecurityGroup.GroupId
+  
+  # Removed Internet Gateway for the time being for security purposes
+  # InternetGateway:
+  #   Type: AWS::EC2::InternetGateway
+  #   Properties:
+  #     Tags:
+  #       - Key: Name
+  #         Value: !Sub '${Env}-${DeploymentRootName}-${CompId}-internet-gateway-${AWS::AccountId}-${Region}'
+
+  # InternetGatewayAttachment:
+  #   Type: AWS::EC2::VPCGatewayAttachment
+  #   Properties:
+  #     InternetGatewayId: !Ref InternetGateway
+  #     VpcId: !Ref VPC
+  # PublicSubnet1:
+  #   Type: AWS::EC2::Subnet
+  #   Properties:
+  #     VpcId: !Ref VPC
+  #     AvailabilityZone: !Select [0, !GetAZs ""]
+  #     CidrBlock: !Ref PublicSubnet1CIDR
+  #     MapPublicIpOnLaunch: true
+  #     Tags:
+  #       - Key: Name
+  #         Value: !Sub '${Env}-${DeploymentRootName}-${CompId}-public-subnet-${AWS::AccountId}-${Region}'
+  # Don't need it here for the ref. Left for reference.
+  # PublicSubnet2:
+  #   Type: AWS::EC2::Subnet
+  #   Properties:
+  #     VpcId: !Ref VPC
+  #     AvailabilityZone: !Select [1, !GetAZs ""]
+  #     CidrBlock: !Ref PublicSubnet2CIDR
+  #     MapPublicIpOnLaunch: true
+  #     Tags:
+  #       - Key: Name
+  #         Value: !Sub "${ProjectName} Public Subnet (AZ2)"
+  # NatGateway2EIP:
+  #   Type: AWS::EC2::EIP
+  #   DependsOn: InternetGatewayAttachment
+  #   Properties:
+  #     Domain: vpc
+  # NatGateway2:
+  #   Type: AWS::EC2::NatGateway
+  #   Properties:
+  #     AllocationId: !GetAtt NatGateway2EIP.AllocationId
+  #     SubnetId: !Sub '${Env}-${DeploymentRootName}-${CompId}-nat-gateway-2-${AWS::AccountId}-${Region}'
+  # PublicRouteTable:
+  #   Type: AWS::EC2::RouteTable
+  #   Properties:
+  #     VpcId: !Ref VPC
+  #     Tags:
+  #       - Key: Name
+  #         Value: !Sub '${Env}-${DeploymentRootName}-${CompId}-public-routes-${AWS::AccountId}-${Region}'
+  # DefaultPublicRoute:
+  #   Type: AWS::EC2::Route
+  #   DependsOn: InternetGatewayAttachment
+  #   Properties:
+  #     RouteTableId: !Ref PublicRouteTable
+  #     DestinationCidrBlock: 0.0.0.0/0
+  #     GatewayId: !Ref InternetGateway
+  # PublicSubnet1RouteTableAssociation:
+  #   Type: AWS::EC2::SubnetRouteTableAssociation
+  #   Properties:
+  #     RouteTableId: !Ref PublicRouteTable
+  #     SubnetId: !Ref PublicSubnet1
+  # PublicSubnet2RouteTableAssociation:
+  #   Type: AWS::EC2::SubnetRouteTableAssociation
+  #   Properties:
+  #     RouteTableId: !Ref PublicRouteTable
+  #     SubnetId: !Ref PublicSubnet2
+  # DefaultPrivateRoute1:
+  #   Type: AWS::EC2::Route
+  #   Properties:
+  #     RouteTableId: !Ref PrivateRouteTable1
+  #     DestinationCidrBlock: 0.0.0.0/0
+  #     NatGatewayId: !Ref NatGateway1
+  # PrivateRouteTable2:
+  #   Type: AWS::EC2::RouteTable
+  #   Properties:
+  #     VpcId: !Ref VPC
+  #     Tags:
+  #       - Key: Name
+  #         Value: !Sub '${Env}-${DeploymentRootName}-${CompId}-private-routes-2-${AWS::AccountId}-${Region}'
+  # DefaultPrivateRoute2:
+  #   Type: AWS::EC2::Route
+  #   Properties:
+  #     RouteTableId: !Ref PrivateRouteTable2
+  #     DestinationCidrBlock: 0.0.0.0/0
+  #     NatGatewayId: !Ref NatGateway2
+  # PrivateSubnet2RouteTableAssociation:
+  #   Type: AWS::EC2::SubnetRouteTableAssociation
+  #   Properties:
+  #     RouteTableId: !Ref PrivateRouteTable2
+  #     SubnetId: SubnetId: !Sub '${Env}-${DeploymentRootName}-${CompId}-private-subnet-rt-association2-${AWS::AccountId}-${Region}'

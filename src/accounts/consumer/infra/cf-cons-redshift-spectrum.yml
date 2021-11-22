@@ -1,0 +1,467 @@
+AWSTemplateFormatVersion: 2010-09-09
+Description: Consumer-account Redshift Spectrum resource definitions.
+
+# See https://github.com/aws-samples/aws-redshift-spectrum-poc/blob/master/cf-templates/redshift-spectrum-poc-env.template for original reference.
+Metadata:
+  'AWS::CloudFormation::Interface':
+    ParameterGroups:
+      - Label:
+          default: Region Configurations
+        Parameters:
+          - pAvailabilityZone
+      - Label:
+          default: VPC Configurations
+        Parameters:
+          - pPoCVPCName
+          - pPoCEnvCIDR
+          - pPublicSubnetCIDR
+          - pPrivateAnalyticsSubnetCIDR
+      - Label:
+          default: Bastion Host Configurations
+        Parameters:
+          - pBastionHostInstanceType
+          - pBastionHostImageId
+          - pBastionHostEC2KeyPair
+          - pInboundTraffic
+      - Label:
+          default: Redshift Cluster Configurations
+        Parameters:
+          - pClusterType
+          - pNumberOfNodes
+          - pNodeType
+          - pDBPortNumber
+          - pDatabaseName
+          - pMasterUsername
+          - pMasterUserPassword
+      - Label:
+          - default: Datalake Configurations
+        Parameters:
+          - pS3BucketName
+    ParameterLabels:
+      pS3BucketName:
+        default: S3 Bucket Name
+      pPoCVPCName:
+        default: PoC VPC Name
+      pPoCEnvCIDR:
+        default: VPC CIDR Block
+      pAvailabilityZone:
+        default: Availability Zone
+      pPublicSubnetCIDR:
+        default: Public Subnet
+      pPrivateAnalyticsSubnetCIDR:
+        default: Analytics Private Subnet
+      pBastionHostInstanceType:
+        default: Instance Type
+      pBastionHostEC2KeyPair:
+        default: EC2 Key Pair
+      pInboundTraffic:
+        default: Whitelist CIDR Block
+      pClusterType:
+        default: Cluster Type
+      pNodeType:
+        default: Node Instance Type
+      pNumberOfNodes:
+        default: Number of Compute Nodes
+      pDBPortNumber:
+        default: Listener Port
+      pDatabaseName:
+        default: Database Name
+      pMasterUsername:
+        default: DB User Name
+      pMasterUserPassword:
+        default: DB User Password
+Parameters:
+  DeploymentRootName:
+    Description: Root name of project/component deployment
+    Type: String
+    Default: lakehouse
+  AccountShorthand:
+    Description: Abbreviated logical account identifier
+    Type: String
+    Default: cons
+  Region:
+    Description: The region for the template to be deployed.
+    Type: String
+    Default: us-east-2
+    AllowedValues:
+      - us-east-2
+      - us-east-1
+  CompId:
+    Description: This templates' component identifier string
+    Type: String
+    Default: cons-lf
+  Env:
+    Description: The environment in which the account is being deployed.
+    Type: String
+    Default: dev
+    AllowedValues:
+      - dev
+      - qa
+      - prod
+  pBastionHostInstanceType:
+    Type: String
+    Default: t2.medium
+    AllowedValues:
+      - t2.medium
+      - t2.large
+      - t2.xlarge
+      - m4.large
+      - m4.xlarge
+    Description: Instance type for your bastion host
+  pBastionHostImageId:
+    Description: >-
+      Provide the latest Windows Full Base AMI ID: 
+      http://docs.aws.amazon.com/AWSEC2/latest/WindowsGuide/finding-an-ami.html
+    Type: String
+    Default: 'resolve:ssm:/aws/service/ami-amazon-linux-latest/amzn2-ami-hvm-x86_64-gp2' # 'ami-0ff460b217b1af4ef'
+    MinLength: 10   
+  pBastionHostEC2KeyPair:
+    Description: >-
+      Name of an existing EC2 key pair, which you will use to log into the
+      Bastion host
+    Type: String
+    MinLength: 1
+  pPoCVPCName:
+    Description: VPC Name
+    Type: String
+    Default: dev-consumer-redshift-vpc
+    MinLength: 1
+  pPoCEnvCIDR:
+    Description: CIDR Block for the PoC VPC
+    Type: String
+    MinLength: 9
+    Default: 10.0.3.0/22
+  pAvailabilityZone:
+    Description: The AZ to deploy your Redshift cluster
+    Type: 'AWS::EC2::AvailabilityZone::Name'
+    Default: 'us-east-2a'
+    MinLength: 6
+  pPublicSubnetCIDR:
+    Description: A public subnet  for the Windows bastion host
+    Type: String
+    Default: 10.0.1.0/25
+    MinLength: 9
+  pPrivateAnalyticsSubnetCIDR:
+    Description: A private subnet just for the Redshift cluster
+    Type: String
+    Default: 10.0.2.0/24
+    MinLength: 9
+  pDatabaseName:
+    Description: The name of the first database to be created when the cluster is created
+    Type: String
+    AllowedPattern: '([a-z]|[0-9])+'
+    Default: 'devlakehouseredshiftspectrumdatabase'
+    MinLength: 1
+  pClusterType:
+    Description: The type of cluster
+    Type: String
+    Default: multi-node
+    AllowedValues:
+      - single-node
+      - multi-node
+  pNumberOfNodes:
+    Description: >-
+      The number of compute nodes in the cluster. For multi-node clusters, the
+      NumberOfNodes parameter must be greater than 1
+    Type: String
+    Default: '2'
+    MinLength: 1
+  pNodeType:
+    Description: The type of node to be provisioned
+    Type: String
+    Default: dc2.large
+    AllowedValues:
+      - ds2.xlarge
+      - ds2.8xlarge
+      - dc1.large
+      - dc1.8xlarge
+      - dc2.large
+      - dc2.8xlarge
+      - ra3.16xlarge
+  pMasterUsername:
+    Description: >-
+      The user name that is associated with the master user account for the
+      cluster that is being created
+    Type: String
+    Default: admin
+    AllowedPattern: '([a-zA-Z])([a-zA-Z]|[0-9])*'
+  pMasterUserPassword:
+    Description: >-
+      The password that is associated with the master user account for the
+      cluster that is being created.
+    Type: String
+    NoEcho: 'true'
+    # Default: 'Password1!'
+    MinLength: 8
+    MaxLength: 64
+  pInboundTraffic:
+    Description: Allow inbound traffic to the bastion host from this CIDR range.
+    Type: String
+    MinLength: 9
+    MaxLength: 18
+    Default: 0.0.0.0/0
+    AllowedPattern: '(\d{1,3})\.(\d{1,3})\.(\d{1,3})\.(\d{1,3})/(\d{1,2})'
+    ConstraintDescription: must be a valid CIDR range of the form x.x.x.x/x.
+  pDBPortNumber:
+    Description: The port number on which the cluster accepts incoming connections.
+    Type: Number
+    Default: '5439'
+  pS3BucketName:
+    Description: Specify the S3 bucket name containing the data you wish to query using Redshift Spectrum.
+    Type: String
+    Default: 'dev-lakehouse-lh-s3-curated'
+    MinLength: 3
+    AllowedPattern: '([a-z-])([a-z-]|[0-9])*'
+Conditions:
+  IsMultiNodeCluster: !Equals 
+    - !Ref pClusterType
+    - multi-node
+Resources:
+  rBastionHost:
+    Type: 'AWS::EC2::Instance'
+    Properties:
+      KeyName: !Ref pBastionHostEC2KeyPair
+      Tags:
+        - Key: Name
+          Value: Redshift Spectrum POC Bastion Host
+      NetworkInterfaces:
+        - AssociatePublicIpAddress: true
+          DeviceIndex: 0
+          GroupSet:
+            - !Ref rBastionHostSecurityGroup
+          SubnetId: !Ref rPublicSubnet
+      ImageId: !Ref pBastionHostImageId
+      InstanceType: !Ref pBastionHostInstanceType
+  rRecoveryAlarm:
+    Type: 'AWS::CloudWatch::Alarm'
+    Properties:
+      AlarmDescription: Recovering instance when underlying hardware fails.
+      Namespace: AWS/EC2
+      MetricName: StatusCheckFailed_System
+      Statistic: Minimum
+      Period: 60
+      EvaluationPeriods: 10
+      ComparisonOperator: GreaterThanThreshold
+      Threshold: 0
+      AlarmActions:
+        - !Sub 'arn:aws:automate:${AWS::Region}:ec2:recover'
+      Dimensions:
+        - Name: InstanceId
+          Value: !Ref rBastionHost
+  rPoCVPC:
+    Type: 'AWS::EC2::VPC'
+    Properties:
+      CidrBlock: !Ref pPoCEnvCIDR
+      InstanceTenancy: default
+      EnableDnsSupport: true
+      EnableDnsHostnames: true
+      Tags:
+        - Key: Name
+          Value: !Ref pPoCVPCName
+  rPublicSubnet:
+    Type: 'AWS::EC2::Subnet'
+    Properties:
+      CidrBlock: !Ref pPublicSubnetCIDR
+      AvailabilityZone: !Ref pAvailabilityZone
+      VpcId: !Ref rPoCVPC
+  rPublicRouteTable:
+    Type: 'AWS::EC2::RouteTable'
+    Properties:
+      VpcId: !Ref rPoCVPC
+  rPublicRoute:
+    Type: 'AWS::EC2::Route'
+    DependsOn: rIGWAttachment
+    Properties:
+      RouteTableId: !Ref rPublicRouteTable
+      DestinationCidrBlock: 0.0.0.0/0
+      GatewayId: !Ref rIGW
+  rPublicSubnetRouteTableAssociation:
+    Type: 'AWS::EC2::SubnetRouteTableAssociation'
+    Properties:
+      SubnetId: !Ref rPublicSubnet
+      RouteTableId: !Ref rPublicRouteTable
+  rPrivateAnalyticsSubnet:
+    Type: 'AWS::EC2::Subnet'
+    Properties:
+      CidrBlock: !Ref pPrivateAnalyticsSubnetCIDR
+      AvailabilityZone: !Ref pAvailabilityZone
+      VpcId: !Ref rPoCVPC
+      Tags:
+        - Key: Name
+          Value: Private Analytics Subnet
+  rIGW:
+    Type: 'AWS::EC2::InternetGateway'
+    Properties:
+      Tags:
+        - Key: Name
+          Value: igw-poc-env
+  rIGWAttachment:
+    Type: 'AWS::EC2::VPCGatewayAttachment'
+    DependsOn: rIGW
+    Properties:
+      VpcId: !Ref rPoCVPC
+      InternetGatewayId: !Ref rIGW
+  rRedshiftCluster:
+    Type: 'AWS::Redshift::Cluster'
+    DependsOn: rRedshiftSpectrumRole
+    Properties:
+      ClusterType: !Ref pClusterType
+      NumberOfNodes: !If 
+        - IsMultiNodeCluster
+        - !Ref pNumberOfNodes
+        - !Ref 'AWS::NoValue'
+      NodeType: !Ref pNodeType
+      DBName: !Ref pDatabaseName
+      MasterUsername: !Ref pMasterUsername
+      MasterUserPassword: !Ref pMasterUserPassword
+      VpcSecurityGroupIds:
+        - !Ref rRedshiftSecurityGroup
+      ClusterSubnetGroupName: !Ref rRedshiftClusterSubnetGroup
+      PubliclyAccessible: 'false'
+      Port: !Ref pDBPortNumber
+      IamRoles:
+        - 'Fn::GetAtt':
+            - rRedshiftSpectrumRole
+            - Arn
+        - 'Fn::GetAtt':
+            - rRedshiftSpectrumRole2
+            - Arn
+        - 'Fn::GetAtt':
+            - rRedshiftSpectrumRole3
+            - Arn
+  rRedshiftSpectrumRole:
+    Type: 'AWS::IAM::Role'
+    Properties:
+      AssumeRolePolicyDocument:
+        Version: 2012-10-17
+        Statement:
+          - Effect: Allow
+            Principal:
+              Service: redshift.amazonaws.com
+            Action: 'sts:AssumeRole'
+      Path: /
+      Policies:
+        - PolicyName: spectrum-required-access
+          PolicyDocument:
+            Version: 2012-10-17
+            Statement:
+              - Effect: Allow
+                Action:
+                  - 's3:*'
+                  - 'glue:*'
+                  - 'lakeformation:*'
+                  - 'redshift:*'
+                  # - 's3:Get*'
+                  # - 's3:List*'
+                  # - 'glue:Get*'
+                  # - 'glue:List*'
+                  # - 'glue:CreateDatabase'
+                  # - 'glue:CreateTable'
+                  # - 'glue:AlterTable'
+                  # - 'lakeformation:Get*'
+                  # - 'lakeformation:List*'
+                  # - 'lakeformation:*'
+                  # - 'lakeformation:CreateDatabase'
+                  # - 'lakeformation:CreateTable'
+                  # - 'lakeformation:DropTable'
+                  # - 'lakeformation:AlterTable'
+                Resource:
+                  - '*'
+                  # - !Sub 'arn:aws:s3:::${pS3BucketName}'
+                  # - !Sub 'arn:aws:s3:::${pS3BucketName}/*'
+                  # - !Sub 'arn:aws:lakeformation:${Region}:${AWS::AccountId}:*'
+                  # - !Sub 'arn:aws:glue:${Region}:${AWS::AccountId}:*'
+  rRedshiftSpectrumRole2:
+    Type: 'AWS::IAM::Role'
+    Properties:
+      RoleName: !Sub '${Env}-${DeploymentRootName}-${CompId}-redshift-dev-${AWS::AccountId}-${Region}'
+      AssumeRolePolicyDocument:
+        Version: 2012-10-17
+        Statement:
+          - Effect: Allow
+            Principal:
+              Service: redshift.amazonaws.com
+            Action: 'sts:AssumeRole'
+      Path: /
+      Policies:
+        - PolicyName: spectrum-required-access
+          PolicyDocument:
+            Version: 2012-10-17
+            Statement:
+              - Effect: Allow
+                Action:
+                  - 's3:*'
+                  - 'glue:*'
+                  - 'lakeformation:*'
+                  - 'redshift:*'
+                Resource:
+                  - '*'
+  rRedshiftSpectrumRole3:
+    Type: 'AWS::IAM::Role'
+    Properties:
+      RoleName: !Sub '${Env}-${DeploymentRootName}-${CompId}-redshift-analyst-${AWS::AccountId}-${Region}'
+      AssumeRolePolicyDocument:
+        Version: 2012-10-17
+        Statement:
+          - Effect: Allow
+            Principal:
+              Service: redshift.amazonaws.com
+            Action: 'sts:AssumeRole'
+      Path: /
+      Policies:
+        - PolicyName: spectrum-required-access
+          PolicyDocument:
+            Version: 2012-10-17
+            Statement:
+              - Effect: Allow
+                Action:
+                  - 's3:*'
+                  - 'glue:*'
+                  - 'lakeformation:*'
+                  - 'redshift:*'
+                Resource:
+                  - '*'
+  rBastionHostSecurityGroup:
+    Type: 'AWS::EC2::SecurityGroup'
+    Properties:
+      GroupDescription: allow connections from specified CIDR ranges
+      VpcId: !Ref rPoCVPC
+      Tags:
+        - Key: Name
+          Value: RedshiftBastionHostSG
+      SecurityGroupIngress:
+        - IpProtocol: tcp
+          FromPort: 3389
+          ToPort: 3389
+          CidrIp: !Ref pInboundTraffic
+  rRedshiftClusterSubnetGroup:
+    Type: 'AWS::Redshift::ClusterSubnetGroup'
+    Properties:
+      Description: Cluster subnet group
+      SubnetIds:
+        - !Ref rPrivateAnalyticsSubnet
+  rRedshiftSecurityGroup:
+    Type: 'AWS::EC2::SecurityGroup'
+    Properties:
+      GroupDescription: Security group
+      SecurityGroupIngress:
+        - IpProtocol: tcp
+          FromPort: !Ref pDBPortNumber
+          ToPort: !Ref pDBPortNumber
+          SourceSecurityGroupId: !Ref rBastionHostSecurityGroup
+      VpcId: !Ref rPoCVPC
+Outputs:
+  ClusterEndpoint:
+    Description: Cluster endpoint
+    Value: !Sub '${rRedshiftCluster.Endpoint.Address}:${rRedshiftCluster.Endpoint.Port}'
+  ClusterName:
+    Description: Name of cluster
+    Value: !Ref rRedshiftCluster
+  RedshiftClusterSecurityGroupName:
+    Description: Name of cluster security group
+    Value: !Ref rRedshiftSecurityGroup
+  RedshiftClusterIAMRole:
+    Description: >-
+      IAM Role that the cluster and db users can assume. Required to setup
+      Redshift Spectrum
+    Value: !GetAtt rRedshiftSpectrumRole.Arn

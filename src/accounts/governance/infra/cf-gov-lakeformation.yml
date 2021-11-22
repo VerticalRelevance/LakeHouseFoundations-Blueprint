@@ -1,0 +1,464 @@
+AWSTemplateFormatVersion: 2010-09-09
+Description: AWSCloudFormationStackSetAdministrationRole to enable use of AWS CloudFormation StackSets.
+
+Mappings:
+  SubnetConfig:
+    VPC:
+      CIDR: 10.0.20.0/16
+    PublicOne:
+      CIDR: 10.0.20.0/24
+    PublicTwo:
+      CIDR: 10.0.21.0/24
+    Private:
+      CIDR: 10.0.22.0/24
+
+Parameters:
+  DeploymentRootName:
+    Description: Root name of project/component deployment
+    Type: String
+    Default: lakehouse
+  AccountShorthand:
+    Description: Abbreviated logical account identifier
+    Type: String
+    Default: lz
+  Region:
+    Description: The region for the template to be deployed.
+    Type: String
+    Default: us-east-2
+    AllowedValues:
+      - us-east-2
+      - us-east-1
+  CompId:
+    Description: This templates' component identifier string
+    Type: String
+    Default: gov-lf
+  Env:
+    Description: The environment in which the account is being deployed.
+    Type: String
+    Default: dev
+    AllowedValues:
+      - dev
+      - qa
+      - prod
+  TestUserPassword:
+    Type: String
+    Description: Password for all test users.
+    NoEcho: true
+  ResourceBucketName:
+    Description: The name of the deployment resource bucket.
+    Type: String
+  WorkflowInitiatorS3Location:
+    Description: The location of the Lambda Glue Workflow Initiator script.
+    Type: String
+  WorkfowInitiatorFileName:
+    Description: The name of the file in the workflow initiator zip file.
+    Type: String
+Resources:
+  LakeFormationVPC:
+    Type: 'AWS::EC2::VPC'
+    Properties:
+      CidrBlock: !FindInMap 
+        - SubnetConfig
+        - VPC
+        - CIDR
+      InstanceTenancy: default
+      EnableDnsSupport: 'true'
+      EnableDnsHostnames: 'true'
+      Tags:
+        - Key: Name
+          Value: !Sub '${Env}-${DeploymentRootName}-${CompId}-vpc-${AWS::AccountId}-${Region}'
+  PrivateSubnet:
+    Type: 'AWS::EC2::Subnet'
+    Properties:
+      CidrBlock: !FindInMap 
+        - SubnetConfig
+        - Private
+        - CIDR
+      MapPublicIpOnLaunch: 'true'
+      AvailabilityZone: !Select 
+        - 1
+        - !GetAZs 
+          Ref: 'AWS::Region'
+      VpcId: !Ref LakeFormationVPC
+      Tags:
+        - Key: Name
+          Value: !Sub '${Env}-${DeploymentRootName}-${CompId}-private-subnet-${AWS::AccountId}-${Region}'
+  PublicSubnetOne:
+    Type: 'AWS::EC2::Subnet'
+    Properties:
+      CidrBlock: !FindInMap 
+        - SubnetConfig
+        - PublicOne
+        - CIDR
+      MapPublicIpOnLaunch: 'true'
+      AvailabilityZone: !Select 
+        - 0
+        - !GetAZs 
+          Ref: 'AWS::Region'
+      VpcId: !Ref LakeFormationVPC
+      Tags:
+        - Key: Name
+          Value: !Sub '${Env}-${DeploymentRootName}-${CompId}-public-subnet-1-${AWS::AccountId}-${Region}'
+  PublicSubnetTwo:
+    Type: 'AWS::EC2::Subnet'
+    Properties:
+      CidrBlock: !FindInMap 
+        - SubnetConfig
+        - PublicTwo
+        - CIDR
+      MapPublicIpOnLaunch: 'true'
+      AvailabilityZone: !Select 
+        - 1
+        - !GetAZs 
+          Ref: 'AWS::Region'
+      VpcId: !Ref LakeFormationVPC
+      Tags:
+        - Key: Name
+          Value: !Sub '${Env}-${DeploymentRootName}-${CompId}-public-subnet-2-${AWS::AccountId}-${Region}'
+  InternetGateway:
+    Type: 'AWS::EC2::InternetGateway'
+    Properties:
+      Tags:
+        - Key: Name
+          Value: !Sub '${Env}-${DeploymentRootName}-${CompId}-IG-${AWS::AccountId}-${Region}'
+  VPCGatewayAttachment:
+    Type: 'AWS::EC2::VPCGatewayAttachment'
+    Properties:
+      VpcId: !Ref LakeFormationVPC
+      InternetGatewayId: !Ref InternetGateway
+  InternetGatewayRouteTable:
+    Type: 'AWS::EC2::RouteTable'
+    Properties:
+      VpcId: !Ref LakeFormationVPC
+  InternetGatewayRoute:
+    Type: 'AWS::EC2::Route'
+    DependsOn: VPCGatewayAttachment
+    Properties:
+      DestinationCidrBlock: 0.0.0.0/0
+      RouteTableId: !Ref InternetGatewayRouteTable
+      GatewayId: !Ref InternetGateway
+  PublicSubnetOneRouteTableAssociation:
+    Type: 'AWS::EC2::SubnetRouteTableAssociation'
+    Properties:
+      RouteTableId: !Ref InternetGatewayRouteTable
+      SubnetId: !Ref PublicSubnetOne
+  PublicSubnetTwoRouteTableAssociation:
+    Type: 'AWS::EC2::SubnetRouteTableAssociation'
+    Properties:
+      RouteTableId: !Ref InternetGatewayRouteTable
+      SubnetId: !Ref PublicSubnetTwo
+  NATGatewayAttachment:
+    Type: 'AWS::EC2::EIP'
+    DependsOn: VPCGatewayAttachment
+    Properties:
+      Domain: vpc
+  NATGateway:
+    Type: 'AWS::EC2::NatGateway'
+    Properties:
+      SubnetId: !Ref PublicSubnetOne
+      AllocationId: !GetAtt NATGatewayAttachment.AllocationId
+      Tags:
+        - Key: Name
+          Value: !Sub '${Env}-${DeploymentRootName}-${CompId}-NAT-Gateway-${AWS::AccountId}-${Region}'
+  NATGatewayRouteTable:
+    Type: 'AWS::EC2::RouteTable'
+    Properties:
+      VpcId: !Ref LakeFormationVPC
+      Tags:
+        - Key: Name
+          Value: !Sub '${Env}-${DeploymentRootName}-${CompId}-NAT-Route-Table-${AWS::AccountId}-${Region}'
+  NATGatewayRoute:
+    Type: 'AWS::EC2::Route'
+    Properties:
+      DestinationCidrBlock: 0.0.0.0/0
+      RouteTableId: !Ref NATGatewayRouteTable
+      NatGatewayId: !Ref NATGateway
+  PrivateSubnetRouteTableAssociation:
+    Type: 'AWS::EC2::SubnetRouteTableAssociation'
+    Properties:
+      RouteTableId: !Ref NATGatewayRouteTable
+      SubnetId: !Ref PrivateSubnet
+  S3Endpoint:
+    Type: 'AWS::EC2::VPCEndpoint'
+    Properties:
+      PolicyDocument:
+        Version: 2012-10-17
+        Statement:
+          - Effect: Allow
+            Action: '*'
+            Principal: '*'
+            Resource: '*'
+      RouteTableIds:
+        - !Ref NATGatewayRouteTable
+        - !Ref InternetGatewayRouteTable
+      ServiceName: !Sub 'com.amazonaws.${AWS::Region}.s3'
+      VpcId: !Ref LakeFormationVPC
+  LfServiceRole:
+    Type: 'AWS::IAM::Role'
+    Properties:
+      RoleName: !Sub '${Env}-${DeploymentRootName}-${CompId}-glue-role-${AWS::AccountId}-${Region}'
+      AssumeRolePolicyDocument:
+        Version: 2012-10-17
+        Statement:
+          - Effect: Allow
+            Principal:
+              AWS: 
+                - "arn:aws:iam::127700773039:root"
+              Service:
+                - glue.amazonaws.com
+                - lakeformation.amazonaws.com
+                - firehose.amazonaws.com
+                - lambda.amazonaws.com
+                - states.amazonaws.com
+            Action: 'sts:AssumeRole'
+      ManagedPolicyArns:
+        - 'arn:aws:iam::aws:policy/service-role/AWSGlueServiceRole'
+        - 'arn:aws:iam::aws:policy/AmazonKinesisFullAccess' # Don't need this but to-be-removed
+      Policies:
+        - PolicyName: !Sub '${Env}-${DeploymentRootName}-${CompId}-glue-role-policy-1-${AWS::AccountId}-${Region}'
+          PolicyDocument:
+            Version: 2012-10-17
+            Statement:
+              - Effect: Allow
+                Action:
+                  - 's3:*'
+                Resource:
+                  - !Join 
+                    - ''
+                    - - 'arn:aws:s3:::'
+                      - 'dev-lakehouse-lh-s3-curated'
+                      - /*
+                  - !Join 
+                    - ''
+                    - - 'arn:aws:s3:::'
+                      - 'dev-lakehouse-lh-s3-curated'
+        - PolicyName: !Sub '${Env}-${DeploymentRootName}-${CompId}-glue-role-policy-2-${AWS::AccountId}-${Region}'
+          PolicyDocument:
+            Version: 2012-10-17
+            Statement:
+              - Effect: Allow
+                Action:
+                  - 's3:*'
+                Resource:
+                  - !Join 
+                    - ''
+                    - - 'arn:aws:s3:::'
+                      - !Ref LfBucket
+                      - /*
+                  - !Join 
+                    - ''
+                    - - 'arn:aws:s3:::'
+                      - !Ref LfBucket
+        - PolicyName: !Sub '${Env}-${DeploymentRootName}-${CompId}-glue-role-policy-3-${AWS::AccountId}-${Region}'
+          PolicyDocument:
+            Version: 2012-10-17
+            Statement:
+              - Effect: Allow
+                Action:
+                  - 'lakeformation:GetDataAccess'
+                  - 'lakeformation:GrantPermissions'
+                Resource: '*'
+        - PolicyName: !Sub '${Env}-${DeploymentRootName}-${CompId}-glue-role-policy-4-${AWS::AccountId}-${Region}'
+          PolicyDocument:
+            Version: 2012-10-17
+            Statement:
+              - Effect: Allow
+                Action:
+                  - 'iam:PassRole'
+                Resource:
+                  - !Join 
+                    - ''
+                    - - 'arn:aws:iam::'
+                      - !Ref 'AWS::AccountId'
+                      - !Sub ':role/${Env}-lakehouse-${CompId}-glue-service-role'
+                  - !Join 
+                    - ''
+                    - - 'arn:aws:iam::'
+                      - !Ref 'AWS::AccountId'
+                      - ':role/LakeFormationWorkflowRole'
+        - PolicyName: !Sub '${Env}-${DeploymentRootName}-${CompId}-glue-role-policy-5-${AWS::AccountId}-${Region}'
+          PolicyDocument:
+            Version: "2012-10-17"
+            Statement:
+              -
+                Effect: "Allow"
+                Action: 
+                  - "s3:*"
+                  - "glue:*"
+                  - "logs:*"
+                  - "lakeformation:*"
+                  - "lambda:*"
+                Resource:
+                  - !Join [ '', ["arn:aws:s3:::*"]] 
+                  - !Join [ '', ["arn:aws:glue:*:*:", "*"]]
+                  - !Join [ '', ["arn:aws:lakeformation:*:*", "*"]]
+                  - !Join [ '', ["arn:aws:logs:*:*:", "*"]]
+                  - "arn:aws:lambda:*:*:*"
+  GovGlueDatabase:
+    Type: AWS::Glue::Database
+    Properties: 
+      CatalogId: !Sub '${AWS::AccountId}'
+      DatabaseInput:
+        Name: !Sub '${Env}-${DeploymentRootName}-${CompId}-db-${AWS::AccountId}-${Region}'
+  # This creates curated bucket table (so that the table can be exposed to the consumer account before the first crawl)
+  GovGlueTable:
+    Type: AWS::Glue::Table
+    Properties:
+      CatalogId: !Sub '${AWS::AccountId}'
+      DatabaseName: !Ref GovGlueDatabase
+      TableInput:
+        Name: !Join ['_', !Split ['-', !Sub "${Env}-${DeploymentRootName}-lh-s3-curated-127700773039-${Region}"]]
+  GovernanceWorkflow:
+    Type: AWS::Glue::Workflow
+    Properties:
+      Name: !Sub "${Env}-${DeploymentRootName}-${CompId}-governance-workflow-${AWS::AccountId}-${Region}"
+      Description: "Workflow to orchestrate data governance steps for the lakehouse S3 data lake."
+  # GlueJobRole:
+  #   Type: AWS::IAM::Role
+  #   Properties:
+  #     RoleName: !Sub "${Env}-${DeploymentRootName}-${CompId}-role-${AWS::AccountId}-${Region}"
+  #     AssumeRolePolicyDocument:
+  #       Version: 2012-10-17
+  #       Statement:
+  #         - Effect: Allow
+  #           Principal:
+  #             AWS: 
+  #               - "arn:aws:iam::127700773039:root"
+  #             Service:
+  #               - lambda.amazonaws.com
+  #           Action: 'sts:AssumeRole'
+  #     ManagedPolicyArns:
+  #       - 'arn:aws:iam::aws:policy/service-role/AWSGlueServiceRole'
+  #     Policies:
+  #       - PolicyName: !Sub '${Env}-${DeploymentRootName}-${CompId}-role-policy-${AWS::AccountId}-${Region}'
+  #         PolicyDocument:
+  #           Version: "2012-10-17"
+  #           Statement:
+  #             -
+  #               Effect: "Allow"
+  #               Action: 
+  #                 - "s3:*"
+  #                 - "glue:*"
+  #                 - "logs:*"
+  #                 - "lakeformation:*"
+  #                 - "lambda:*"
+  #               Resource:
+  #                 - "arn:aws:s3:::*"
+  #                 - "arn:aws:glue:*:*:*"
+  #                 - "arn:aws:lakeformation:*:*:*"
+  #                 - "arn:aws:logs:*:*:*"
+  #                 - "arn:aws:lambda:*:*:*"
+  GovGlueCrawler:
+    Type: AWS::Glue::Crawler
+    Properties:
+      Name: !Sub '${Env}-${DeploymentRootName}-${CompId}-crawler-${AWS::AccountId}-${Region}'
+      Description: Crawler of desired data resource
+      Role: !Ref LfServiceRole
+      DatabaseName: !Ref GovGlueDatabase
+      Targets:
+        S3Targets: 
+          - 
+            Path: !Sub "${Env}-${DeploymentRootName}-lh-s3-curated-127700773039-${Region}"
+      Configuration: "{\"Version\":1.0,\"CrawlerOutput\":{\"Partitions\":{\"AddOrUpdateBehavior\":\"InheritFromTable\"},\"Tables\":{\"AddOrUpdateBehavior\":\"MergeNewColumns\"}}}"
+  GovWorkflowTrigger:
+    Type: AWS::Glue::Trigger
+    Properties:
+      Name: !Sub "${Env}-${DeploymentRootName}-${CompId}-gov-workflow-trigger-${AWS::AccountId}-${Region}"
+      WorkflowName: !Ref GovernanceWorkflow
+      Type: "ON_DEMAND"
+      Description: "Triggers the governance catalog workflow."
+      Actions:
+        - CrawlerName: !Ref GovGlueCrawler
+  LfCuratedBucketResource:
+    Type: AWS::LakeFormation::Resource
+    Properties: 
+      ResourceArn: !Join ["", ["arn:aws:s3:::", !Sub '${Env}-${DeploymentRootName}-${CompId}-crawler-${AWS::AccountId}-${Region}']]
+      RoleArn: !GetAtt LfServiceRole.Arn
+      UseServiceLinkedRole: false
+  LoggingBucket:
+    Type: 'AWS::S3::Bucket'
+    Properties:
+      BucketName: !Sub '${Env}-${DeploymentRootName}-${CompId}-logs-${AWS::AccountId}-${Region}'
+      AccessControl: LogDeliveryWrite
+  LfBucket:
+    Type: 'AWS::S3::Bucket'
+    Properties:
+      BucketName: !Sub '${Env}-${DeploymentRootName}-${CompId}-lf-bucket-${AWS::AccountId}-${Region}'
+      LoggingConfiguration:
+        DestinationBucketName: !Ref LoggingBucket
+        LogFilePrefix: lf-bucket/
+      BucketEncryption: 
+        ServerSideEncryptionConfiguration: 
+          - ServerSideEncryptionByDefault:
+              SSEAlgorithm: AES256
+  AdminUser:
+    Type: 'AWS::IAM::User'
+    Properties:
+      UserName: !Sub '${Env}-${DeploymentRootName}-${CompId}-lf-admin-${AWS::AccountId}-${Region}'
+      Path: /
+      LoginProfile:
+        Password: !Ref TestUserPassword
+        PasswordResetRequired: false
+      Policies:
+        - PolicyName: LF-DataLake-Admin-Policy
+          PolicyDocument:
+            Version: 2012-10-17
+            Statement:
+              - Effect: Allow
+                Action:
+                  - 'lakeformation:*'
+                  - 'cloudtrail:DescribeTrails'
+                  - 'cloudtrail:LookupEvents'
+                  - 'glue:*'
+                  - 's3:ListBucket'
+                  - 's3:GetBucketLocation'
+                  - 's3:ListAllMyBuckets'
+                  - 's3:GetBucketAcl'
+                  - 'iam:ListUsers'
+                  - 'iam:ListRoles'
+                  - 'iam:GetRole'
+                  - 'iam:GetRolePolicy'
+                  - 'cloudformation:*'
+                  - 'elasticmapreduce:*'
+                  - 'tag:Get*'
+                  - 'glue:BatchGetCrawlers'
+                  - 'ec2:AuthorizeSecurityGroupEgress'
+                  - 'ec2:AuthorizeSecurityGroupIngress'
+                  - 'ec2:RevokeSecurityGroupEgress'
+                  - 'ec2:RevokeSecurityGroupIngress'
+                  - 'redshift:*'
+                Resource: '*'
+              - Effect: Allow
+                Action: 'iam:PassRole'
+                Resource:
+                  - '*'
+      ManagedPolicyArns:
+        - 'arn:aws:iam::aws:policy/AWSLakeFormationCrossAccountManager'
+        - 'arn:aws:iam::aws:policy/AmazonEC2ReadOnlyAccess'
+  WorkflowInitiatorPermission:
+      Type: AWS::Lambda::Permission
+      Properties: 
+        Action: lambda:InvokeFunction
+        FunctionName: !Ref WorkflowInitiator
+        Principal: 127700773039
+  WorkflowInitiator:
+    Type: AWS::Lambda::Function
+    Properties:
+      FunctionName: !Sub "${Env}-${DeploymentRootName}-${CompId}-workflow-initiator-${AWS::AccountId}-${Region}"
+      Runtime: python3.9
+      Role: !GetAtt LfServiceRole.Arn
+      Handler: !Sub "${WorkfowInitiatorFileName}.initiate_workflow"
+      Code:
+        S3Key: !Ref WorkflowInitiatorS3Location
+        S3Bucket: !Ref ResourceBucketName
+      Environment:
+        Variables: 
+          GovGlueWorkflowName: !Join ["396791034774", !Split  ["127700773039", !Ref GovernanceWorkflow]]
+Outputs:
+  ConsoleIAMLoginUrl:
+    Description: Console IAM Login URL to try out different users
+    Value: !Join 
+      - ''
+      - - 'https://'
+        - !Ref 'AWS::AccountId'
+        - .signin.aws.amazon.com/console

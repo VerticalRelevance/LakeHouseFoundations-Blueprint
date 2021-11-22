@@ -1,0 +1,111 @@
+AWSTemplateFormatVersion: 2010-09-09
+Description: Consumer template for Athena query resources
+
+Parameters:
+  DeploymentRootName:
+    Description: Root name of project/component deployment
+    Type: String
+    Default: lakehouse
+  AccountShorthand:
+    Description: Abbreviated logical account identifier
+    Type: String
+    Default: cons
+  Region:
+    Description: The region for the template to be deployed.
+    Type: String
+    Default: us-east-2
+    AllowedValues:
+      - us-east-2
+      - us-east-1
+  CompId:
+    Description: This templates' component identifier string
+    Type: String
+    Default: cons-lf
+  Env:
+    Description: The environment in which the account is being deployed.
+    Type: String
+    Default: dev
+    AllowedValues:
+      - dev
+      - qa
+      - prod
+
+Resources:
+
+  # Athena WorkGroup
+  MyAthenaWorkGroup:
+    Type: AWS::Athena::WorkGroup
+    Properties:
+      Name: !Sub "${Env}-lakehouse-${CompId}-athena-wg-1"
+      Description: Workgroup for consumer Athena query
+      State: ENABLED
+      WorkGroupConfiguration:
+        BytesScannedCutoffPerQuery: 200000000
+        EnforceWorkGroupConfiguration: false
+        PublishCloudWatchMetricsEnabled: false
+        RequesterPaysEnabled: true
+        ResultConfiguration:
+          OutputLocation: s3://path/to/my/bucket/
+
+ # AthenaDeveloperNamedQuery:
+  #   Type: 'AWS::Athena::NamedQuery'
+  #   Properties:
+  #     Database: !Ref TPCDBName
+  #     Description: A developer query on web page and web sales data.
+  #     Name: LF-Developer-Query
+  #     QueryString: >
+  #       /*
+  #        * Developer can only see web_page & web_sales tables
+  #        */
+  #       SELECT sum(ws_net_paid_inc_tax) NetPaid,
+  #               ws_web_site_sk WebSiteID
+  #       FROM dl_tpc_web_sales ws, dl_tpc_web_page wp WHERE ws.ws_web_site_sk =
+  #       wp.wp_web_page_sk GROUP BY  ws_web_site_sk;
+
+
+  #       /*
+  #        Check out the web_sales table
+  #       */ SELECT COUNT(*) FROM dl_tpc_web_sales;
+
+
+  #       /* Verify that a developer cannot access any other table. This should
+  #       give a Insufficient Privileges message */ SELECT * FROM dl_tpc_item
+  #       limit 10;
+  # AthenaBusinessAnalystNamedQuery:
+  #   Type: 'AWS::Athena::NamedQuery'
+  #   Properties:
+  #     Database: !Ref TPCDBName
+  #     Description: Sample query issued by Business Analyst.
+  #     Name: LF-BusinessAnalyst-Query
+  #     QueryString: |
+  #       /*
+  #          Verify that business-analyst can access the all the non-PII columns in customer table
+  #          */
+  #         SELECT *
+  #         FROM dl_tpc_customer limit 10;
+
+  #         /*
+  #          Verify that a business-analyst cannot access PII data
+  #         */
+  #         SELECT c_first_name, c_last_name, c_customer_sk, c_current_addr_sk
+  #         FROM dl_tpc_customer;
+  # AthenaCampaignManagerNamedQuery:
+  #   Type: 'AWS::Athena::NamedQuery'
+  #   Properties:
+  #     Database: !Ref TPCDBName
+  #     Description: Sample query issued by Campaign Manager.
+  #     Name: LF-CampaignManager-Query
+  #     QueryString: >
+  #       /*
+  #        * Sample Query from a Campaign Manager who is interested in marketing analytics
+  #        */
+
+  #       SELECT count(distinct i.i_item_sk) NumItems, p.p_promo_id PromotionId
+  #       FROM dl_tpc_item i, dl_tpc_promotion p, dl_tpc_web_sales ws WHERE
+  #       i.i_item_sk = ws_item_sk AND ws.ws_promo_sk = p.p_promo_sk GROUP BY
+  #       p.p_promo_id;
+
+  #       /*
+  #        * Make sure Campaign manager cannot access web_page table
+  #        */
+  #       SELECT count(*) FROM dl_tpc_web_page;

@@ -313,41 +313,6 @@ Resources:
     Properties:
       Name: !Sub "${Env}-${DeploymentRootName}-${CompId}-governance-workflow-${AWS::AccountId}-${Region}"
       Description: "Workflow to orchestrate data governance steps for the lakehouse S3 data lake."
-  # GlueJobRole:
-  #   Type: AWS::IAM::Role
-  #   Properties:
-  #     RoleName: !Sub "${Env}-${DeploymentRootName}-${CompId}-role-${AWS::AccountId}-${Region}"
-  #     AssumeRolePolicyDocument:
-  #       Version: 2012-10-17
-  #       Statement:
-  #         - Effect: Allow
-  #           Principal:
-  #             AWS: 
-  #               - "arn:aws:iam::127700773039:root"
-  #             Service:
-  #               - lambda.amazonaws.com
-  #           Action: 'sts:AssumeRole'
-  #     ManagedPolicyArns:
-  #       - 'arn:aws:iam::aws:policy/service-role/AWSGlueServiceRole'
-  #     Policies:
-  #       - PolicyName: !Sub '${Env}-${DeploymentRootName}-${CompId}-role-policy-${AWS::AccountId}-${Region}'
-  #         PolicyDocument:
-  #           Version: "2012-10-17"
-  #           Statement:
-  #             -
-  #               Effect: "Allow"
-  #               Action: 
-  #                 - "s3:*"
-  #                 - "glue:*"
-  #                 - "logs:*"
-  #                 - "lakeformation:*"
-  #                 - "lambda:*"
-  #               Resource:
-  #                 - "arn:aws:s3:::*"
-  #                 - "arn:aws:glue:*:*:*"
-  #                 - "arn:aws:lakeformation:*:*:*"
-  #                 - "arn:aws:logs:*:*:*"
-  #                 - "arn:aws:lambda:*:*:*"
   GovGlueCrawler:
     Type: AWS::Glue::Crawler
     Properties:

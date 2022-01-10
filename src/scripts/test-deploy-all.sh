@@ -38,9 +38,6 @@
 # alias region1="aws configure set region us-east-1"
 # alias region2="aws configure set region us-east-2"
 
-# alias list-active-stacks="aws cloudformation list-stacks --stack-status-filter \"CREATE_COMPLETE\" \"UPDATE_COMPLETE\""
-# alias list-broken-stacks="aws cloudformation list-stacks --stack-status-filter \"UPDATE_ROLLBACK_COMPLETE\" \"DELETE_FAILED\" \"UPDATE_ROLLBACK_FAILED\" \"CREATE_FAILED\""
-
 ###
 # Once you've setup the above (OUTSIDE OF THIS REPOSITORY!), you can run the following...
 ###
@@ -52,7 +49,7 @@ testpass=$1
 if [ ! testpass ]; then
     echo "Supply a test user password as a string argument. Exiting with error."
     exit 0
-fi
+fi  
 
 # Landing Zone Account
 vrLabLz

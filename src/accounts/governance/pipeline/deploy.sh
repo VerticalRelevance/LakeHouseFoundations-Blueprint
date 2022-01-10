@@ -25,6 +25,7 @@ rm -rf ./*.zip
 zip a -r "$WorkflowInitiatorZipFileName" "../infra/*.py"
 WorkflowInitiatorS3Location="$AccountShorthand-scripts/$WorkflowInitiatorZipFileName"
 aws s3 cp "$WorkflowInitiatorZipFileName" "$ResourceBucketURI/$WorkflowInitiatorS3Location"
+rm -rf "$WorkflowInitiatorZipFileName"
 echo "Resource files synced to S3 resource bucket."
 
 echo "Deploying Lake Formation stack.."

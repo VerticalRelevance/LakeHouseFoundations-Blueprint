@@ -140,6 +140,32 @@ Once the Redshift cluster is deployed into the Consumer account, an external tab
 
 ## Links
 
+## Bootstrapping Scripts
+- [describe-lf-permissions.sh][]: ./src/accounts/scripts/describe-lf-permissions.sh
+- [get-vpc-info.sh][]: ./src/accounts/scripts/get-vpc-info.sh
+- [run-cfnnag.sh][]: ./src/accounts/scripts/run-cfnnag.sh
+- [set-variables.sh][]: ./src/accounts/scripts/set-variables.sh
+- [test-deploy-all.sh][]: ./src/accounts/scripts/test-deploy-all.sh
+- [test-destroy-all.sh][]: ./src/accounts/scripts/test-destroy-all.sh
+- [test-status-all.sh][]: ./src/accounts/scripts/test-status-all.sh
+
+## Extended Documentation Links
+- [Landing Zone Account Docs][]: ./src/accounts/governance/README.md
+- [Lake House Account Docs][]: ./src/accounts/lakehouse/README.md
+- [Governance Account Docs][]: ./src/accounts/lz/README.md
+- [Consumer Account Docs][]: ./src/accounts/consumer/README.md
+- [Lake Formation Permission Settings][]: ./resources/LakeHouse_LakeFormation_Settings.xlsx
+
+## Images
+[TARGET ARCH DIAGRAM][]: ./resources/images/lakehouse-ref-arch-1.png "Reference Architecture Diagram"
+[THE LAKE HOUSE APPROACH][]: ./resources/images/aws-the-lake-house-approach.png "\"The Lake House Approach\""
+[GLUE WORKFLOW ORCHESTRATION][]: ./resources/images/step-function-glue-workflow-orchestration.png "Data Ingestion Orchestration with a Step Function"
+
+## Data Sources
+- [Sample HR JSON Data Set][]: ./resources/datasets/hr_data\sample-json
+- [Sample HR PG Data Set][]: ./src/accounts/lz/infra/cf-lz-rds-postgres-setup.sql
+- [Redshift Setup SQL][]: ./src/accounts/consumer/infra/redshift-setup.sql
+
 ### Lake House Architecture
 - [Redshift/Lake House Architecture][]: https://aws.amazon.com/redshift/lake-house-architecture/ 
 - [Data Lake and Data Mesh Architectures][][]: https://aws.amazon.com/blogs/big-data/design-a-data-mesh-architecture-using-aws-lake-formation-and-aws-glue/
@@ -170,29 +196,3 @@ Once the Redshift cluster is deployed into the Consumer account, an external tab
 
 ### Misc
 - [DataBrew Blog with Example CF Stack][]: https://aws.amazon.com/blogs/big-data/preparing-data-for-ml-models-using-aws-glue-databrew-in-a-jupyter-notebook/
-
-## Bootstrapping Scripts
-- [describe-lf-permissions.sh][]: src/accounts/scripts/describe-lf-permissions.sh
-- [get-vpc-info.sh][]: src/accounts/scripts/get-vpc-info.sh
-- [run-cfnnag.sh][]: src/accounts/scripts/run-cfnnag.sh
-- [set-variables.sh][]: src/accounts/scripts/set-variables.sh
-- [test-deploy-all.sh][]: src/accounts/scripts/test-deploy-all.sh
-- [test-destroy-all.sh][]: src/accounts/scripts/test-destroy-all.sh
-- [test-status-all.sh][]: src/accounts/scripts/test-status-all.sh
-
-## Extended Documentation Links
-- [Landing Zone Account Docs][]: src/accounts/governance/README.md
-- [Lake House Account Docs][]: src/accounts/lakehouse/README.md
-- [Governance Account Docs][]: src/accounts/lz/README.md
-- [Consumer Account Docs][]: src/accounts/consumer/README.md
-- [Lake Formation Permission Settings][]: ./resources/LakeHouse_LakeFormation_Settings.xlsx
-
-## Images
-[TARGET ARCH DIAGRAM][]: ./resources/images/lakehouse-ref-arch-1.png "Reference Architecture Diagram"
-[THE LAKE HOUSE APPROACH][]: ./resources/images/aws-the-lake-house-approach.png "\"The Lake House Approach\""
-[GLUE WORKFLOW ORCHESTRATION][]: ./resources/images/step-function-glue-workflow-orchestration.png "Data Ingestion Orchestration with a Step Function"
-
-## Data Sources
-- [Sample HR JSON Data Set][]: ./resources/datasets/hr_data\sample-json
-- [Sample HR PG Data Set][]: ./src/accounts/lz/infra/cf-lz-rds-postgres-setup.sql
-- [Redshift Setup SQL][]: ./src/accounts/consumer/infra/redshift-setup.sql

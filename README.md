@@ -85,10 +85,10 @@ Each of the infrastructure templates in this repository contain the following pa
 
 ## Account Folder Structure
 See the following README.md doc links for futher details regarding specific account deployment/configuration details:
-- [Landing Zone Account Docs][]
-- [Lake House Account Docs][]
-- [Governance Account Docs][]
-- [Consumer Account Docs][]
+- [Landing Zone Account Docs]
+- [Lake House Account Docs]
+- [Governance Account Docs]
+- [Consumer Account Docs]
 
 ## Setup and Tear-Down
 This project was built with the intention of it being a reference. As such, all of the setup and tear-down resources have been build into Bash scripts. This allows 2 things: 1) The ability to run the entire setup and tear-down from your location workstation and 2) The ability to adopt any of the Bash scripting into and CI/CD tool of your choice. 
@@ -101,18 +101,18 @@ Be sure to look at the account-specific readme file in the respective account di
 #### Bootstrapping Scripts
 
 Make sure to take the time to setup your execution environment correctly before attempting to deploy or destroy resources with these files.
-- [describe-lf-permissions.sh][] - Performs a specific CLI call to list-permissions on the active credentials in the terminal.
-- [get-vpc-info.sh][]: Returns VPC info on the active region with the active credentials in the terminal.
-- [run-cfnnag.sh][]: Takes a single argument as the input path to a Cloudformation template to perform a static unit test of the template.
-- [set-variables.sh][]: A script used across all account pipeline/deploy.sh and pipeline/destroy.sh scripts. Sets common variables. 
-- [test-deploy-all.sh][]: A script to deploy all resources to all accounts, in two regions. To perform a single-region deployment, comment out the same regional deployments for all the account deployments. **Please note the setup section within this file must be completed before running this file.**
-- [test-destroy-all.sh][]: A script to tear-down all resources from all accounts, in both regions. The script will continue to run, and does not currently error, if a deployment is not found. **Please note the setup section within the test-deploy-all.sh file must be completed before running this file.**
-- [test-status-all.sh][]: Checks the status of all component templates for all regions in all accounts.
+- [describe-lf-permissions.sh] - Performs a specific CLI call to list-permissions on the active credentials in the terminal.
+- [get-vpc-info.sh]: Returns VPC info on the active region with the active credentials in the terminal.
+- [run-cfnnag.sh]: Takes a single argument as the input path to a Cloudformation template to perform a static unit test of the template.
+- [set-variables.sh]: A script used across all account pipeline/deploy.sh and pipeline/destroy.sh scripts. Sets common variables. 
+- [test-deploy-all.sh]: A script to deploy all resources to all accounts, in two regions. To perform a single-region deployment, comment out the same regional deployments for all the account deployments. **Please note the setup section within this file must be completed before running this file.**
+- [test-destroy-all.sh]: A script to tear-down all resources from all accounts, in both regions. The script will continue to run, and does not currently error, if a deployment is not found. **Please note the setup section within the test-deploy-all.sh file must be completed before running this file.**
+- [test-status-all.sh]: Checks the status of all component templates for all regions in all accounts.
 
 #### Data Ingestion Process
 The data flow pipeline example data is provided in 2 files for 2 different sources.
-1) S3 data in JSON format found at [Sample HR JSON Data Set][].
-2) (Currently in progress) Aurora Postgresql data found in the [Sample HR PG Data Set][].
+1) S3 data in JSON format found at [Sample HR JSON Data Set].
+2) (Currently in progress) Aurora Postgresql data found in the [Sample HR PG Data Set].
 
 Glue Workflows are deployed into the Landing Zone, Lake House, and Governance accounts. All three of the account Glue Workflows are orchestrated sequentionally by a step-function deployed in the Lake House account. At a high-level, the data ingestion process is automated by this step-function. See the next section for more detail.
 
@@ -126,73 +126,73 @@ The three high-level steps involved are:
 3) Finally, trigger the Glue Workflow in the Data Governance account. This Glue Workflow triggers a crawler to populate the data catalog in the Governance account with the 'curated zone' S3 bucket data schema.
 
 #### Governance Account Lake Formation Configuration
-The settings for the Governance Account Lake Formation configurations have been copied into the [Lake Formation Permission Settings][] Excel spreadsheet. Please refer to this file for details on the Permissions Setup.
+The settings for the Governance Account Lake Formation configurations have been copied into the [Lake Formation Permission Settings] Excel spreadsheet. Please refer to this file for details on the Permissions Setup.
 
 #### Consumer Account Configuration
 
 ##### Lake Formation Setup
-The settings for the Consumer Account Lake Formation configurations have been copied into the [Lake Formation Permission Settings][] Excel spreadsheet. Please refer to this file for details on the Permissions Setup.
+The settings for the Consumer Account Lake Formation configurations have been copied into the [Lake Formation Permission Settings] Excel spreadsheet. Please refer to this file for details on the Permissions Setup.
 
 ##### Consumer Account Redshift Setup
-Once the Redshift cluster is deployed into the Consumer account, an external table must be created. You must create a *Resource Link* in the Lake Formation Catalog of the shared RAM resource. In our case, a resource link named 'hr-data-resource-link' was created. Assuming you were also your resource link name, you would create the Redshift External table with the commands found in the [Redshift Setup SQL][] file.
+Once the Redshift cluster is deployed into the Consumer account, an external table must be created. You must create a *Resource Link* in the Lake Formation Catalog of the shared RAM resource. In our case, a resource link named 'hr-data-resource-link' was created. Assuming you were also your resource link name, you would create the Redshift External table with the commands found in the [Redshift Setup SQL] file.
 
 # Reference
 
 ## Links
 
 ## Bootstrapping Scripts
-- [describe-lf-permissions.sh][]: ./src/accounts/scripts/describe-lf-permissions.sh
-- [get-vpc-info.sh][]: ./src/accounts/scripts/get-vpc-info.sh
-- [run-cfnnag.sh][]: ./src/accounts/scripts/run-cfnnag.sh
-- [set-variables.sh][]: ./src/accounts/scripts/set-variables.sh
-- [test-deploy-all.sh][]: ./src/accounts/scripts/test-deploy-all.sh
-- [test-destroy-all.sh][]: ./src/accounts/scripts/test-destroy-all.sh
-- [test-status-all.sh][]: ./src/accounts/scripts/test-status-all.sh
+- [describe-lf-permissions.sh]: ./src/accounts/scripts/describe-lf-permissions.sh
+- [get-vpc-info.sh]: ./src/accounts/scripts/get-vpc-info.sh
+- [run-cfnnag.sh]: ./src/accounts/scripts/run-cfnnag.sh
+- [set-variables.sh]: ./src/accounts/scripts/set-variables.sh
+- [test-deploy-all.sh]: ./src/accounts/scripts/test-deploy-all.sh
+- [test-destroy-all.sh]: ./src/accounts/scripts/test-destroy-all.sh
+- [test-status-all.sh]: ./src/accounts/scripts/test-status-all.sh
 
 ## Extended Documentation Links
-- [Landing Zone Account Docs][]: ./src/accounts/governance/README.md
-- [Lake House Account Docs][]: ./src/accounts/lakehouse/README.md
-- [Governance Account Docs][]: ./src/accounts/lz/README.md
-- [Consumer Account Docs][]: ./src/accounts/consumer/README.md
-- [Lake Formation Permission Settings][]: ./resources/LakeHouse_LakeFormation_Settings.xlsx
+- [Landing Zone Account Docs]: ./src/accounts/governance/README.md
+- [Lake House Account Docs]: ./src/accounts/lakehouse/README.md
+- [Governance Account Docs]: ./src/accounts/lz/README.md
+- [Consumer Account Docs]: ./src/accounts/consumer/README.md
+- [Lake Formation Permission Settings]: ./resources/LakeHouse_LakeFormation_Settings.xlsx
 
 ## Images
-[TARGET ARCH DIAGRAM][]: ./resources/images/lakehouse-ref-arch-1.png "Reference Architecture Diagram"
-[THE LAKE HOUSE APPROACH][]: ./resources/images/aws-the-lake-house-approach.png "\"The Lake House Approach\""
-[GLUE WORKFLOW ORCHESTRATION][]: ./resources/images/step-function-glue-workflow-orchestration.png "Data Ingestion Orchestration with a Step Function"
+[TARGET ARCH DIAGRAM]: ./resources/images/lakehouse-ref-arch-1.png "Reference Architecture Diagram"
+[THE LAKE HOUSE APPROACH]: ./resources/images/aws-the-lake-house-approach.png "\"The Lake House Approach\""
+[GLUE WORKFLOW ORCHESTRATION]: ./resources/images/step-function-glue-workflow-orchestration.png "Data Ingestion Orchestration with a Step Function"
 
 ## Data Sources
-- [Sample HR JSON Data Set][]: ./resources/datasets/hr_data\sample-json
-- [Sample HR PG Data Set][]: ./src/accounts/lz/infra/cf-lz-rds-postgres-setup.sql
-- [Redshift Setup SQL][]: ./src/accounts/consumer/infra/redshift-setup.sql
+- [Sample HR JSON Data Set]: ./resources/datasets/hr_data\sample-json
+- [Sample HR PG Data Set]: ./src/accounts/lz/infra/cf-lz-rds-postgres-setup.sql
+- [Redshift Setup SQL]: ./src/accounts/consumer/infra/redshift-setup.sql
 
 ### Lake House Architecture
-- [Redshift/Lake House Architecture][]: https://aws.amazon.com/redshift/lake-house-architecture/ 
-- [Data Lake and Data Mesh Architectures][][]: https://aws.amazon.com/blogs/big-data/design-a-data-mesh-architecture-using-aws-lake-formation-and-aws-glue/
-- [Databricks Definitive Lake House Concepts][]: https://databricks.com/research/lakehouse-a-new-generation-of-open-platforms-that-unify-data-warehousing-and-advanced-analytics
-- [Lake House Self-Service Analytics Power Point][]: https://pages.awscloud.com/rs/112-TZM-766/images/EV_deploy-lake-house-architecture-to-enable-self-service-analytics-with-aws-lake-formation_Jul-2021.pdf
+- [Redshift/Lake House Architecture]: https://aws.amazon.com/redshift/lake-house-architecture/ 
+- [Data Lake and Data Mesh Architectures]: https://aws.amazon.com/blogs/big-data/design-a-data-mesh-architecture-using-aws-lake-formation-and-aws-glue/
+- [Databricks Definitive Lake House Concepts]: https://databricks.com/research/lakehouse-a-new-generation-of-open-platforms-that-unify-data-warehousing-and-advanced-analytics
+- [Lake House Self-Service Analytics Power Point]: https://pages.awscloud.com/rs/112-TZM-766/images/EV_deploy-lake-house-architecture-to-enable-self-service-analytics-with-aws-lake-formation_Jul-2021.pdf
 
 ### Lakeformation Setup
-- [Changing default Lakeformation Security Settings][]: https://docs.aws.amazon.com/lake-formation/latest/dg/change-settings.html 
-- [Resource Linking a Shared Catalog Database][]: https://docs.aws.amazon.com/lake-formation/latest/dg/creating-resource-links.html
-- [Sharing Catalog Resources X-ACNT][]: https://docs.aws.amazon.com/lake-formation/latest/dg/sharing-catalog-resources.html
-- [Video - Data Mesh Architecture on AWS][]: https://www.youtube.com/watch?v=YPYODx4Pfdc
-- [Lake Formation Governed Tables][]: https://aws.amazon.com/blogs/big-data/part-1-effective-data-lakes-using-aws-lake-formation-part-1-getting-started-with-governed-tables/
+- [Changing default Lakeformation Security Settings]: https://docs.aws.amazon.com/lake-formation/latest/dg/change-settings.html 
+- [Resource Linking a Shared Catalog Database]: https://docs.aws.amazon.com/lake-formation/latest/dg/creating-resource-links.html
+- [Sharing Catalog Resources X-ACNT]: https://docs.aws.amazon.com/lake-formation/latest/dg/sharing-catalog-resources.html
+- [Video - Data Mesh Architecture on AWS]: https://www.youtube.com/watch?v=YPYODx4Pfdc
+- [Lake Formation Governed Tables]: https://aws.amazon.com/blogs/big-data/part-1-effective-data-lakes-using-aws-lake-formation-part-1-getting-started-with-governed-tables/
 
 ### Resource Security Setup Links
 #### Cross-account LakeFormation Documentation
-- [X-ACNT LAKEFORMATION DOCS][]: https://docs.aws.amazon.com/lake-formation/latest/dg/access-control-cross-account.html
+- [X-ACNT LAKEFORMATION DOCS]: https://docs.aws.amazon.com/lake-formation/latest/dg/access-control-cross-account.html
 #### AWS MSK
-- [MSK CF TLS CONGIF][]: https://docs.aws.amazon.com/AWSCloudFormation/latest/UserGuide/aws-properties-msk-cluster-tls.html
+- [MSK CF TLS CONGIF]: https://docs.aws.amazon.com/AWSCloudFormation/latest/UserGuide/aws-properties-msk-cluster-tls.html
 
 ### LakeFormation Integration
 #### Redshift Spectrum
-- [Spectrum/S3 Minimum Permissions][]: https://docs.aws.amazon.com/redshift/latest/dg/c-spectrum-iam-policies.html#spectrum-iam-policies-minimum-permissions
-- [Spectrum/LakeFormation][]: https://docs.aws.amazon.com/redshift/latest/dg/spectrum-lake-formation.html
-- [Athena Federated Query??][]: https://github.com/awslabs/aws-athena-query-federation/blob/master/athena-example/athena-example.yaml
-- [AWS RedshiftSpectrum POC][]: https://github.com/aws-samples/aws-redshift-spectrum-poc/blob/master/cf-templates/redshift-spectrum-poc-env.template
+- [Spectrum/S3 Minimum Permissions]: https://docs.aws.amazon.com/redshift/latest/dg/c-spectrum-iam-policies.html#spectrum-iam-policies-minimum-permissions
+- [Spectrum/LakeFormation]: https://docs.aws.amazon.com/redshift/latest/dg/spectrum-lake-formation.html
+- [Athena Federated Query??]: https://github.com/awslabs/aws-athena-query-federation/blob/master/athena-example/athena-example.yaml
+- [AWS RedshiftSpectrum POC]: https://github.com/aws-samples/aws-redshift-spectrum-poc/blob/master/cf-templates/redshift-spectrum-poc-env.template
 #### LakeFormation/Redshift-Spectrum/Athena
-- [To create an IAM role for Amazon Redshift using an AWS Glue Data Catalog enabled for AWS Lake Formation][]: https://docs.aws.amazon.com/redshift/latest/dg/c-getting-started-using-spectrum-create-role.html#spectrum-get-started-create-role-lake-formation
+- [To create an IAM role for Amazon Redshift using an AWS Glue Data Catalog enabled for AWS Lake Formation]: https://docs.aws.amazon.com/redshift/latest/dg/c-getting-started-using-spectrum-create-role.html#spectrum-get-started-create-role-lake-formation
 
 ### Misc
-- [DataBrew Blog with Example CF Stack][]: https://aws.amazon.com/blogs/big-data/preparing-data-for-ml-models-using-aws-glue-databrew-in-a-jupyter-notebook/
+- [DataBrew Blog with Example CF Stack]: https://aws.amazon.com/blogs/big-data/preparing-data-for-ml-models-using-aws-glue-databrew-in-a-jupyter-notebook/

@@ -140,10 +140,10 @@ Once the Redshift cluster is deployed into the Consumer account, an external tab
 
 ## Links
 
-## Architecture
+### Architecture
 
 
-## Bootstrapping Scripts
+### Bootstrapping Scripts
 [describe-lf-permissions.sh]: ./src/scripts/describe-lf-permissions.sh
 [get-vpc-info.sh]: ./src/scripts/get-vpc-info.sh
 [run-cfnnag.sh]: ./src/scripts/run-cfnnag.sh
@@ -152,19 +152,19 @@ Once the Redshift cluster is deployed into the Consumer account, an external tab
 [test-destroy-all.sh]: ./src/scripts/test-destroy-all.sh
 [test-status-all.sh]: ./src/scripts/test-status-all.sh
 
-## Extended Documentation Links
+### Extended Documentation Links
 [Landing Zone Account Docs]: ./src/accounts/governance/README.md
 [Lake House Account Docs]: ./src/accounts/lakehouse/README.md
 [Governance Account Docs]: ./src/accounts/lz/README.md
 [Consumer Account Docs]: ./src/accounts/consumer/README.md
 [Lake Formation Permission Settings]: ./resources/LakeHouse_LakeFormation_Settings.xlsx
 
-## Images
+### Images
 [TARGET ARCH DIAGRAM]: ./resources/images/lakehouse-ref-arch-1.png
 [THE LAKE HOUSE APPROACH]: ./resources/images/aws-the-lake-house-approach.png
 [GLUE WORKFLOW ORCHESTRATION]: ./resources/images/step-function-glue-workflow-orchestration.png
 
-## Data Sources
+### Data Sources
 [Sample HR JSON Data Set]: ./resources/datasets/hr_data\sample-json
 [Sample HR PG Data Set]: ./src/accounts/lz/infra/cf-lz-rds-postgres-setup.sql
 [Redshift Setup SQL]: ./src/accounts/consumer/infra/redshift-setup.sql
@@ -183,19 +183,22 @@ Once the Redshift cluster is deployed into the Consumer account, an external tab
 [Lake Formation Governed Tables]: https://aws.amazon.com/blogs/big-data/part-1-effective-data-lakes-using-aws-lake-formation-part-1-getting-started-with-governed-tables/
 
 ### Resource Security Setup Links
-#### Cross-account LakeFormation Documentation
+#### Cross-account Lake Formation Documentation
+![X-ACNT LAKEFORMATION DOCS]
 [X-ACNT LAKEFORMATION DOCS]: https://docs.aws.amazon.com/lake-formation/latest/dg/access-control-cross-account.html
 #### AWS MSK
-[MSK CF TLS CONGIF]: https://docs.aws.amazon.com/AWSCloudFormation/latest/UserGuide/aws-properties-msk-cluster-tls.html
+![MSK CF TLS CONFIG]
+[MSK CF TLS CONFIG]: https://docs.aws.amazon.com/AWSCloudFormation/latest/UserGuide/aws-properties-msk-cluster-tls.html
 
-### LakeFormation Integration
+### Lake Formation Integration
 #### Redshift Spectrum
 [Spectrum/S3 Minimum Permissions]: https://docs.aws.amazon.com/redshift/latest/dg/c-spectrum-iam-policies.html#spectrum-iam-policies-minimum-permissions
-[Spectrum/LakeFormation]: https://docs.aws.amazon.com/redshift/latest/dg/spectrum-lake-formation.html
+[Spectrum/Lake Formation]: https://docs.aws.amazon.com/redshift/latest/dg/spectrum-lake-formation.html
 [AWS RedshiftSpectrum POC]: https://github.com/aws-samples/aws-redshift-spectrum-poc/blob/master/cf-templates/redshift-spectrum-poc-env.template
 
-#### LakeFormation/Redshift-Spectrum/Athena
+#### Lake Formation/Redshift-Spectrum/Athena
 [To create an IAM role for Amazon Redshift using an AWS Glue Data Catalog enabled for AWS Lake Formation]: https://docs.aws.amazon.com/redshift/latest/dg/c-getting-started-using-spectrum-create-role.html#spectrum-get-started-create-role-lake-formation
 
 ### Misc
-![DataBrew Blog with Example CF Stack]: https://aws.amazon.com/blogs/big-data/preparing-data-for-ml-models-using-aws-glue-databrew-in-a-jupyter-notebook/
+![DataBrew Blog with Example CF Stack]
+[DataBrew Blog with Example CF Stack]: https://aws.amazon.com/blogs/big-data/preparing-data-for-ml-models-using-aws-glue-databrew-in-a-jupyter-notebook/

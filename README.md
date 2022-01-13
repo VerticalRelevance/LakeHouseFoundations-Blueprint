@@ -85,10 +85,11 @@ Each of the infrastructure templates in this repository contain the following pa
 
 ## Account Folder Structure
 See the following README.md doc links for futher details regarding specific account deployment/configuration details:
-- ![Landing Zone Account Docs]
-- ![Lake House Account Docs]
-- ![Governance Account Docs]
-- ![Consumer Account Docs]
+- [Landing Zone Account Docs](./src/accounts/governance/README.md)
+- [Lake House Account Docs](./src/accounts/lakehouse/README.md)
+- [Governance Account Docs](./src/accounts/lz/README.md)
+- [Consumer Account Docs](./src/accounts/consumer/README.md)
+- [Lake Formation Permission Settings](./resources/LakeHouse_LakeFormation_Settings.xlsx)
 
 ## Setup and Tear-Down
 This project was built with the intention of it being a reference. As such, all of the setup and tear-down resources have been build into Bash scripts. This allows 2 things: 1) The ability to run the entire setup and tear-down from your location workstation and 2) The ability to adopt any of the Bash scripting into and CI/CD tool of your choice. 

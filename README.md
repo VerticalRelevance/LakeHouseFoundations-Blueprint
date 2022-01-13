@@ -161,9 +161,9 @@ Once the Redshift cluster is deployed into the Consumer account, an external tab
 - [Consumer Account Docs](./src/accounts/consumer/README.md)
 - [Lake Formation Permission Settings](./resources/LakeHouse_LakeFormation_Settings.xlsx)
 
-- [TARGET ARCH DIAGRAM]: ./resources/images/lakehouse-ref-arch-1.png
-- [THE LAKE HOUSE APPROACH]: ./resources/images/aws-the-lake-house-approach.png
-- [GLUE WORKFLOW ORCHESTRATION]: ./resources/images/step-function-glue-workflow-orchestration.png
+[TARGET ARCH DIAGRAM]: ./resources/images/lakehouse-ref-arch-1.png
+[THE LAKE HOUSE APPROACH]: ./resources/images/aws-the-lake-house-approach.png
+[GLUE WORKFLOW ORCHESTRATION]: ./resources/images/step-function-glue-workflow-orchestration.png
 
 ### Data Sources
 - [Sample HR JSON Data Set](./resources/datasets/hr_data\sample-json)

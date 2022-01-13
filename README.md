@@ -181,7 +181,7 @@ Once the Redshift cluster is deployed into the Consumer account, an external tab
 - [Resource Linking a Shared Catalog Database](https://docs.aws.amazon.com/lake-formation/latest/dg/creating-resource-links.html)
 - [Sharing Catalog Resources X-ACNT](https://docs.aws.amazon.com/lake-formation/latest/dg/sharing-catalog-resources.html)
 - [Video - Data Mesh Architecture on AWS](https://www.youtube.com/watch?v=YPYODx4Pfdc)
-- [Lake Formation Governed Tables](https://aws.amazon.com/blogs/big-data/)part-1-effective-data-lakes-using-aws-lake-formation-part-1-getting-started-with-governed-tables/)
+- [Lake Formation Governed Tables](https://aws.amazon.com/blogs/big-data/part-1-effective-data-lakes-using-aws-lake-formation-part-1-getting-started-with-governed-tables/)
 
 ### Resource Security Setup Links
 #### Cross-account Lake Formation Documentation

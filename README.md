@@ -141,8 +141,8 @@ Once the Redshift cluster is deployed into the Consumer account, an external tab
 ## Links
 
 ### Architecture
-- [TARGET ARCH DIAGRAM]
-- [Lake_House_Diagrams.drawio](./resources/Lake_House_Diagrams.drawio)
+[TARGET ARCH DIAGRAM]
+[Lake_House_Diagrams.drawio](./resources/Lake_House_Diagrams.drawio)
 
 ### Bootstrapping Scripts
 [describe-lf-permissions.sh](./src/scripts/describe-lf-permissions.sh)
@@ -180,7 +180,7 @@ Once the Redshift cluster is deployed into the Consumer account, an external tab
 [Changing default Lakeformation Security Settings](https://docs.aws.amazon.com/lake-formation/latest/dg/change-settings.html)
 [Resource Linking a Shared Catalog Database](https://docs.aws.amazon.com/lake-formation/latest/dg/creating-resource-links.html)
 [Sharing Catalog Resources X-ACNT](https://docs.aws.amazon.com/lake-formation/latest/dg/sharing-catalog-resources.html)
-[Video - Data Mesh Architecture on AWS](https://www.youtube.com/watch?v=YPYODx4Pfdc
+[Video - Data Mesh Architecture on AWS](https://www.youtube.com/watch?v=YPYODx4Pfdc)
 [Lake Formation Governed Tables](https://aws.amazon.com/blogs/big-data/)part-1-effective-data-lakes-using-aws-lake-formation-part-1-getting-started-with-governed-tables/)
 
 ### Resource Security Setup Links

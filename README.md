@@ -141,13 +141,13 @@ Once the Redshift cluster is deployed into the Consumer account, an external tab
 ## Links
 
 ## Bootstrapping Scripts
-- [describe-lf-permissions.sh]: ./src/accounts/describe-lf-permissions.sh
-- [get-vpc-info.sh]: ./src/accounts/get-vpc-info.sh
-- [run-cfnnag.sh]: ./src/accounts/run-cfnnag.sh
-- [set-variables.sh]: ./src/accounts/set-variables.sh
-- [test-deploy-all.sh]: ./src/accounts/test-deploy-all.sh
-- [test-destroy-all.sh]: ./src/accounts/test-destroy-all.sh
-- [test-status-all.sh]: ./src/accounts/test-status-all.sh
+- [describe-lf-permissions.sh]: ./src/scripts/describe-lf-permissions.sh
+- [get-vpc-info.sh]: ./src/scripts/get-vpc-info.sh
+- [run-cfnnag.sh]: ./src/scripts/run-cfnnag.sh
+- [set-variables.sh]: ./src/scripts/set-variables.sh
+- [test-deploy-all.sh]: ./src/scripts/test-deploy-all.sh
+- [test-destroy-all.sh]: ./src/scripts/test-destroy-all.sh
+- [test-status-all.sh]: ./src/scripts/test-status-all.sh
 
 ## Extended Documentation Links
 - [Landing Zone Account Docs]: ./src/accounts/governance/README.md

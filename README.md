@@ -141,8 +141,8 @@ Once the Redshift cluster is deployed into the Consumer account, an external tab
 ## Links
 
 ### Architecture
-- ![TARGET ARCH DIAGRAM][Target Architecture Diagram]
-- ![Lake_House_Diagrams.drawio][Lake_House_Diagrams.drawio]
+- [TARGET ARCH DIAGRAM][Target Architecture Diagram]
+- [Lake_House_Diagrams.drawio][Lake_House_Diagrams.drawio]
 [Lake_House_Diagrams.drawio]: ./resources/Lake_House_Diagrams.drawio
 
 ### Bootstrapping Scripts

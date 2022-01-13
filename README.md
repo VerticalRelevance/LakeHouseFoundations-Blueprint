@@ -141,7 +141,9 @@ Once the Redshift cluster is deployed into the Consumer account, an external tab
 ## Links
 
 ### Architecture
-
+- ![TARGET ARCH DIAGRAM]
+- ![Lake_House_Diagrams.drawio] 
+[Lake_House_Diagrams.drawio]: ./resources/Lake_House_Diagrams.drawio
 
 ### Bootstrapping Scripts
 [describe-lf-permissions.sh]: ./src/scripts/describe-lf-permissions.sh
@@ -200,5 +202,4 @@ Once the Redshift cluster is deployed into the Consumer account, an external tab
 [To create an IAM role for Amazon Redshift using an AWS Glue Data Catalog enabled for AWS Lake Formation]: https://docs.aws.amazon.com/redshift/latest/dg/c-getting-started-using-spectrum-create-role.html#spectrum-get-started-create-role-lake-formation
 
 ### Misc
-![DataBrew Blog with Example CF Stack]
 [DataBrew Blog with Example CF Stack]: https://aws.amazon.com/blogs/big-data/preparing-data-for-ml-models-using-aws-glue-databrew-in-a-jupyter-notebook/
